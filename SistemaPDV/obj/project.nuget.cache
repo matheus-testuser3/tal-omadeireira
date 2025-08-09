@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "LH7KSopSZ3XW0vpw6kwcA8CVsT9gL++pxPqVu34/Vuxakan77x/Vd8F+rVH/UqqymTgjp/A0QCZIkSGAO9kdQA==",
+  "success": true,
+  "projectFilePath": "/home/runner/work/tal-omadeireira/tal-omadeireira/SistemaPDV/SistemaPDV.vbproj",
+  "expectedPackageFiles": [
+    "/home/runner/.nuget/packages/microsoft.win32.systemevents/8.0.0/microsoft.win32.systemevents.8.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/system.drawing.common/8.0.0/system.drawing.common.8.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

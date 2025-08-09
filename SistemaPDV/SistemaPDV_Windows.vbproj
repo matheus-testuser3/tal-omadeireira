@@ -1,0 +1,34 @@
+&lt;Project Sdk="Microsoft.NET.Sdk"&gt;
+
+  &lt;PropertyGroup&gt;
+    &lt;OutputType&gt;WinExe&lt;/OutputType&gt;
+    &lt;RootNamespace&gt;SistemaPDV&lt;/RootNamespace&gt;
+    &lt;TargetFramework&gt;net8.0-windows&lt;/TargetFramework&gt;
+    &lt;UseWindowsForms&gt;true&lt;/UseWindowsForms&gt;
+    &lt;StartupObject&gt;SistemaPDV.Program&lt;/StartupObject&gt;
+    &lt;ApplicationIcon&gt;icon.ico&lt;/ApplicationIcon&gt;
+    &lt;AssemblyTitle&gt;Sistema PDV - Madeireira Maria Luiza&lt;/AssemblyTitle&gt;
+    &lt;AssemblyDescription&gt;Sistema completo de Ponto de Venda para Madeireira&lt;/AssemblyDescription&gt;
+    &lt;AssemblyCompany&gt;Madeireira Maria Luiza&lt;/AssemblyCompany&gt;
+    &lt;AssemblyProduct&gt;Sistema PDV&lt;/AssemblyProduct&gt;
+    &lt;AssemblyCopyright&gt;Copyright © 2024 Madeireira Maria Luiza&lt;/AssemblyCopyright&gt;
+    &lt;AssemblyVersion&gt;1.0.0.0&lt;/AssemblyVersion&gt;
+    &lt;FileVersion&gt;1.0.0.0&lt;/FileVersion&gt;
+  &lt;/PropertyGroup&gt;
+
+  &lt;ItemGroup&gt;
+    &lt;PackageReference Include="Microsoft.Office.Interop.Excel" Version="15.0.4795.1001" /&gt;
+  &lt;/ItemGroup&gt;
+
+  &lt;ItemGroup&gt;
+    &lt;Compile Include="Form1_Complete.vb" /&gt;
+    &lt;Compile Include="FormPDV_Complete.vb" /&gt;
+    &lt;Compile Include="ModuloTalaoVBA_Complete.vb" /&gt;
+    &lt;Compile Include="DadosCliente.vb" /&gt;
+  &lt;/ItemGroup&gt;
+
+  &lt;ItemGroup&gt;
+    &lt;None Include="App.config" /&gt;
+  &lt;/ItemGroup&gt;
+
+&lt;/Project&gt;

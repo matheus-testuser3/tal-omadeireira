@@ -29,6 +29,7 @@ Public Class FormPDV
     Private WithEvents txtPrecoUnitario As TextBox
     Private WithEvents btnAdicionarProduto As Button
     Private WithEvents btnRemoverProduto As Button
+    Private WithEvents btnPesquisarProdutos As Button
 
     ' Forma de pagamento
     Private WithEvents cmbFormaPagamento As ComboBox
@@ -49,6 +50,10 @@ Public Class FormPDV
         InitializeComponent()
         ConfigurarInterface()
         DadosColetados = New DadosTalao()
+        
+        ' Aplicar sistema de redimensionamento universal
+        SistemaRedimensionamento.AdaptarFormulario(Me)
+        SistemaRedimensionamento.ConfigurarResponsivo(Me)
     End Sub
 
     ''' <summary>
@@ -247,10 +252,22 @@ Public Class FormPDV
         btnRemoverProduto.FlatAppearance.BorderSize = 0
         pnlProdutos.Controls.Add(btnRemoverProduto)
 
+        ' Botão de pesquisa de produtos
+        btnPesquisarProdutos = New Button()
+        btnPesquisarProdutos.Text = "🔍 Pesquisar Produtos"
+        btnPesquisarProdutos.Location = New Point(20, 75)
+        btnPesquisarProdutos.Size = New Size(150, 25)
+        btnPesquisarProdutos.BackColor = Color.FromArgb(52, 152, 219)
+        btnPesquisarProdutos.ForeColor = Color.White
+        btnPesquisarProdutos.FlatStyle = FlatStyle.Flat
+        btnPesquisarProdutos.FlatAppearance.BorderSize = 0
+        btnPesquisarProdutos.Font = New Font("Segoe UI", 9.0F, FontStyle.Regular)
+        pnlProdutos.Controls.Add(btnPesquisarProdutos)
+
         ' DataGridView para lista de produtos
         dgvProdutos = New DataGridView()
-        dgvProdutos.Location = New Point(20, 85)
-        dgvProdutos.Size = New Size(820, 200)
+        dgvProdutos.Location = New Point(20, 105)
+        dgvProdutos.Size = New Size(820, 180)
         dgvProdutos.AllowUserToAddRows = False
         dgvProdutos.AllowUserToDeleteRows = False
         dgvProdutos.ReadOnly = True
@@ -260,27 +277,31 @@ Public Class FormPDV
         pnlProdutos.Controls.Add(dgvProdutos)
 
         ' Configurar colunas do DataGridView
+        dgvProdutos.Columns.Add("Codigo", "Código")
         dgvProdutos.Columns.Add("Descricao", "Descrição")
         dgvProdutos.Columns.Add("Quantidade", "Qtd")
         dgvProdutos.Columns.Add("Unidade", "Un")
         dgvProdutos.Columns.Add("PrecoUnitario", "Preço Unit.")
         dgvProdutos.Columns.Add("PrecoTotal", "Total")
+        dgvProdutos.Columns.Add("PrecoVisual", "Visual (x1000)")
 
-        dgvProdutos.Columns(0).Width = 350
-        dgvProdutos.Columns(1).Width = 80
-        dgvProdutos.Columns(2).Width = 60
-        dgvProdutos.Columns(3).Width = 100
-        dgvProdutos.Columns(4).Width = 100
+        dgvProdutos.Columns(0).Width = 80  ' Código
+        dgvProdutos.Columns(1).Width = 280 ' Descrição
+        dgvProdutos.Columns(2).Width = 60  ' Quantidade
+        dgvProdutos.Columns(3).Width = 50  ' Unidade
+        dgvProdutos.Columns(4).Width = 90  ' Preço unitário
+        dgvProdutos.Columns(5).Width = 90  ' Total
+        dgvProdutos.Columns(6).Width = 100 ' Visual
 
         ' Forma de pagamento e vendedor
         Dim lblFormaPgto As New Label()
         lblFormaPgto.Text = "Forma de Pagamento:"
-        lblFormaPgto.Location = New Point(20, 300)
+        lblFormaPgto.Location = New Point(20, 295)
         lblFormaPgto.Size = New Size(130, 20)
         pnlProdutos.Controls.Add(lblFormaPgto)
 
         cmbFormaPagamento = New ComboBox()
-        cmbFormaPagamento.Location = New Point(155, 298)
+        cmbFormaPagamento.Location = New Point(155, 293)
         cmbFormaPagamento.Size = New Size(150, 23)
         cmbFormaPagamento.DropDownStyle = ComboBoxStyle.DropDownList
         cmbFormaPagamento.Items.AddRange({"Dinheiro", "Cartão de Débito", "Cartão de Crédito", "PIX", "Boleto", "Fiado", "Cheque"})
@@ -289,12 +310,12 @@ Public Class FormPDV
 
         Dim lblVendedor As New Label()
         lblVendedor.Text = "Vendedor:"
-        lblVendedor.Location = New Point(330, 300)
+        lblVendedor.Location = New Point(330, 295)
         lblVendedor.Size = New Size(60, 20)
         pnlProdutos.Controls.Add(lblVendedor)
 
         txtVendedor = New TextBox()
-        txtVendedor.Location = New Point(395, 298)
+        txtVendedor.Location = New Point(395, 293)
         txtVendedor.Size = New Size(200, 23)
         txtVendedor.Font = New Font("Segoe UI", 10.0F)
         txtVendedor.Text = ConfigurationManager.AppSettings("VendedorPadrao")
@@ -336,6 +357,86 @@ Public Class FormPDV
     Private Sub ConfigurarInterface()
         ' Adicionar alguns produtos de exemplo para a madeireira
         CarregarProdutosTeste()
+        
+        ' Configurar tooltips inteligentes
+        ConfigurarTooltips()
+        
+        ' Configurar formatação visual de quantidades
+        ConfigurarFormatacaoVisual()
+    End Sub
+
+    ''' <summary>
+    ''' Configura tooltips inteligentes
+    ''' </summary>
+    Private Sub ConfigurarTooltips()
+        Dim tooltip As New ToolTip()
+        tooltip.SetToolTip(btnPesquisarProdutos, "Abre busca avançada na planilha de produtos")
+        tooltip.SetToolTip(txtQuantidade, "Digite a quantidade. Para valores grandes, use o sistema visual (x1000)")
+        tooltip.SetToolTip(txtPrecoUnitario, "Preço unitário real. O sistema calculará o preço visual automaticamente")
+        tooltip.SetToolTip(dgvProdutos, "Duplo clique para editar produto. Coluna 'Visual' mostra valores formatados")
+    End Sub
+
+    ''' <summary>
+    ''' Configura formatação visual de quantidades
+    ''' </summary>
+    Private Sub ConfigurarFormatacaoVisual()
+        ' Adicionar evento para formatação automática
+        AddHandler txtQuantidade.Leave, AddressOf FormatarQuantidadeVisual
+        AddHandler txtPrecoUnitario.Leave, AddressOf FormatarPrecoVisual
+    End Sub
+
+    ''' <summary>
+    ''' Formata quantidade com sistema visual (multiplicador 1000)
+    ''' </summary>
+    Private Sub FormatarQuantidadeVisual(sender As Object, e As EventArgs)
+        Try
+            Dim txtQtd = CType(sender, TextBox)
+            Dim quantidade As Double
+            
+            If Double.TryParse(txtQtd.Text.Replace(",", "."), quantidade) Then
+                ' Se quantidade for muito grande, sugerir formato visual
+                If quantidade > 1000 Then
+                    Dim resultado = MessageBox.Show(
+                        $"Quantidade {quantidade:N0} parece ser muito grande." & vbCrLf &
+                        $"Deseja usar o formato visual dividido por 1000?" & vbCrLf & vbCrLf &
+                        $"Visual: {quantidade / 1000:N2} (será multiplicado por 1000 nos cálculos)",
+                        "Formatação de Quantidade",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question)
+                    
+                    If resultado = DialogResult.Yes Then
+                        txtQtd.Text = (quantidade / 1000).ToString("N2")
+                        txtQtd.BackColor = Color.LightBlue
+                        txtQtd.Tag = "VISUAL_1000X" ' Marcar como visual
+                    End If
+                End If
+            End If
+        Catch ex As Exception
+            ' Ignorar erros de formatação
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Formata preço com sistema visual
+    ''' </summary>
+    Private Sub FormatarPrecoVisual(sender As Object, e As EventArgs)
+        Try
+            Dim txtPreco = CType(sender, TextBox)
+            Dim preco As Double
+            
+            If Double.TryParse(txtPreco.Text.Replace("R$", "").Replace(",", ".").Trim(), preco) Then
+                ' Aplicar formatação monetária visual
+                txtPreco.Text = preco.ToString("C2")
+                
+                ' Se preço for muito alto, mostrar também formato visual
+                If preco > 10000 Then
+                    txtPreco.BackColor = Color.LightYellow
+                    txtPreco.Tag = $"VISUAL: {preco / 1000:N1}K"
+                End If
+            End If
+        Catch ex As Exception
+            ' Ignorar erros de formatação
+        End Try
     End Sub
 
     ''' <summary>
@@ -351,21 +452,124 @@ Public Class FormPDV
         ' Limpar produtos existentes
         dgvProdutos.Rows.Clear()
 
-        ' Adicionar produtos de teste
-        AdicionarProdutoNaGrid("Tábua de Pinus 2x4m", 5, "UN", 25.0)
-        AdicionarProdutoNaGrid("Ripão 3x3x3m", 10, "UN", 15.0)
-        AdicionarProdutoNaGrid("Compensado 18mm", 2, "M²", 45.0)
+        ' Adicionar produtos de teste com códigos e formatação visual
+        Dim produtoTeste1 As New ProdutoTalao() With {
+            .Codigo = "MAD001",
+            .Descricao = "Tábua de Pinus 2x4m",
+            .Quantidade = 5,
+            .Unidade = "UN",
+            .PrecoUnitario = 25.0,
+            .PrecoTotal = 125.0,
+            .PrecoVisual = 25000
+        }
+        AdicionarProdutoNaGrid(produtoTeste1)
+
+        Dim produtoTeste2 As New ProdutoTalao() With {
+            .Codigo = "MAD002",
+            .Descricao = "Ripão 3x3x3m",
+            .Quantidade = 10,
+            .Unidade = "UN",
+            .PrecoUnitario = 15.0,
+            .PrecoTotal = 150.0,
+            .PrecoVisual = 15000
+        }
+        AdicionarProdutoNaGrid(produtoTeste2)
+
+        Dim produtoTeste3 As New ProdutoTalao() With {
+            .Codigo = "MAD003",
+            .Descricao = "Compensado 18mm",
+            .Quantidade = 2,
+            .Unidade = "M²",
+            .PrecoUnitario = 45.0,
+            .PrecoTotal = 90.0,
+            .PrecoVisual = 45000
+        }
+        AdicionarProdutoNaGrid(produtoTeste3)
 
         MessageBox.Show("✅ Dados de teste carregados!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information)
     End Sub
 
     ''' <summary>
-    ''' Adiciona produto no DataGridView
+    ''' Adiciona produto à lista com formatação visual
+    ''' </summary>
+    Private Sub AdicionarProdutoNaGrid(produto As ProdutoTalao)
+        ' Calcular preço visual se necessário
+        Dim precoVisual As Double = produto.PrecoUnitario * 1000
+        If TypeOf produto Is ProdutoTalao AndAlso produto.PrecoVisual > 0 Then
+            precoVisual = produto.PrecoVisual
+        End If
+        
+        dgvProdutos.Rows.Add(
+            produto.Codigo,
+            produto.Descricao,
+            produto.Quantidade.ToString("0.##"),
+            produto.Unidade,
+            produto.PrecoUnitario.ToString("C2"),
+            produto.PrecoTotal.ToString("C2"),
+            precoVisual.ToString("N0")
+        )
+        
+        ' Aplicar cores alternadas para melhor visualização
+        Dim ultimaLinha = dgvProdutos.Rows.Count - 1
+        If ultimaLinha Mod 2 = 1 Then
+            dgvProdutos.Rows(ultimaLinha).DefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245)
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' Adiciona produto à lista (sobrecarga compatível)
     ''' </summary>
     Private Sub AdicionarProdutoNaGrid(descricao As String, quantidade As Double, unidade As String, precoUnit As Double)
-        Dim precoTotal As Double = quantidade * precoUnit
-        dgvProdutos.Rows.Add(descricao, quantidade.ToString("0.##"), unidade, 
-                           precoUnit.ToString("C"), precoTotal.ToString("C"))
+        Dim produto As New ProdutoTalao() With {
+            .Codigo = "MANUAL",
+            .Descricao = descricao,
+            .Quantidade = quantidade,
+            .Unidade = unidade,
+            .PrecoUnitario = precoUnit,
+            .PrecoTotal = quantidade * precoUnit,
+            .PrecoVisual = precoUnit * 1000
+        }
+        
+        AdicionarProdutoNaGrid(produto)
+    End Sub
+
+    ''' <summary>
+    ''' Abre formulário de pesquisa de produtos
+    ''' </summary>
+    Private Sub btnPesquisarProdutos_Click(sender As Object, e As EventArgs) Handles btnPesquisarProdutos.Click
+        Try
+            Using formPesquisa As New FormPesquisaProdutos()
+                If formPesquisa.ShowDialog() = DialogResult.OK Then
+                    ' Produto foi selecionado, preencher campos
+                    Dim produto = formPesquisa.ProdutoSelecionado
+                    
+                    txtDescricaoProduto.Text = produto.Descricao
+                    txtQuantidade.Text = "1"
+                    cmbUnidade.Text = produto.Unidade
+                    txtPrecoUnitario.Text = produto.PrecoUnitario.ToString("C2")
+                    
+                    ' Focar na quantidade para facilitar a entrada
+                    txtQuantidade.Focus()
+                    txtQuantidade.SelectAll()
+                    
+                    ' Exibir informações visuais se disponíveis
+                    If produto.PrecoVisual > 0 Then
+                        MessageBox.Show(
+                            $"✅ Produto selecionado!" & vbCrLf & vbCrLf &
+                            $"📦 {produto.Descricao}" & vbCrLf &
+                            $"💰 Preço Real: {produto.PrecoUnitario:C2}" & vbCrLf &
+                            $"🔢 Preço Visual: {produto.PrecoVisual:N0}" & vbCrLf & vbCrLf &
+                            $"Digite a quantidade e clique em '+' para adicionar.",
+                            "Produto Selecionado",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information)
+                    End If
+                End If
+            End Using
+        Catch ex As Exception
+            MessageBox.Show($"Erro ao abrir pesquisa de produtos: {ex.Message}", 
+                          "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     ''' <summary>
@@ -390,13 +594,37 @@ Public Class FormPDV
             Dim quantidade As Double = Convert.ToDouble(txtQuantidade.Text.Replace(",", "."))
             Dim precoUnit As Double = Convert.ToDouble(txtPrecoUnitario.Text.Replace("R$", "").Replace(",", ".").Trim())
 
-            AdicionarProdutoNaGrid(txtDescricaoProduto.Text, quantidade, cmbUnidade.Text, precoUnit)
+            ' Verificar se quantidade está marcada como visual (multiplicador 1000)
+            If txtQuantidade.Tag?.ToString() = "VISUAL_1000X" Then
+                quantidade *= 1000
+                txtQuantidade.BackColor = Color.White ' Remover marcação visual
+                txtQuantidade.Tag = Nothing
+            End If
+
+            ' Criar produto com informações completas
+            Dim produto As New ProdutoTalao() With {
+                .Codigo = "MANUAL",
+                .Descricao = txtDescricaoProduto.Text,
+                .Quantidade = quantidade,
+                .Unidade = cmbUnidade.Text,
+                .PrecoUnitario = precoUnit,
+                .PrecoTotal = quantidade * precoUnit,
+                .PrecoVisual = precoUnit * 1000
+            }
+
+            AdicionarProdutoNaGrid(produto)
 
             ' Limpar campos
             txtDescricaoProduto.Text = ""
             txtQuantidade.Text = "1"
             txtPrecoUnitario.Text = "0,00"
             txtDescricaoProduto.Focus()
+
+            ' Remover formatação visual dos campos
+            txtQuantidade.BackColor = Color.White
+            txtPrecoUnitario.BackColor = Color.White
+            txtQuantidade.Tag = Nothing
+            txtPrecoUnitario.Tag = Nothing
 
         Catch ex As Exception
             MessageBox.Show("Erro ao adicionar produto: " & ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -445,11 +673,25 @@ Public Class FormPDV
             DadosColetados.Produtos.Clear()
             For Each row As DataGridViewRow In dgvProdutos.Rows
                 Dim produto As New ProdutoTalao()
+                produto.Codigo = row.Cells("Codigo").Value?.ToString() ?? "MANUAL"
                 produto.Descricao = row.Cells("Descricao").Value.ToString()
                 produto.Quantidade = Convert.ToDouble(row.Cells("Quantidade").Value.ToString())
                 produto.Unidade = row.Cells("Unidade").Value.ToString()
                 produto.PrecoUnitario = Convert.ToDouble(row.Cells("PrecoUnitario").Value.ToString().Replace("R$", "").Replace(",", ".").Trim())
                 produto.PrecoTotal = produto.Quantidade * produto.PrecoUnitario
+                
+                ' Recuperar preço visual se disponível
+                If row.Cells("PrecoVisual").Value IsNot Nothing Then
+                    Dim precoVisualStr = row.Cells("PrecoVisual").Value.ToString().Replace(".", "")
+                    If Double.TryParse(precoVisualStr, produto.PrecoVisual) Then
+                        ' Preço visual recuperado com sucesso
+                    Else
+                        produto.PrecoVisual = produto.PrecoUnitario * 1000
+                    End If
+                Else
+                    produto.PrecoVisual = produto.PrecoUnitario * 1000
+                End If
+                
                 DadosColetados.Produtos.Add(produto)
             Next
 

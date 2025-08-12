@@ -12,34 +12,40 @@ Public Class ExcelAutomation
     Private vbaInjected As Boolean = False
 
     ''' <summary>
-    ''' Processa o talão completo com integração VBA
+    ''' Processa o talão completo com sistema de mapeamento Excel
     ''' </summary>
     Public Sub ProcessarTalaoCompleto(dados As DadosTalao)
         Try
-            ' Passo 1: Abrir Excel em background
-            AbrirExcel()
-
-            ' Passo 2: Criar planilha temporária
-            CriarPlanilhaTemporaria()
-
-            ' Passo 3: Injetar módulos VBA
-            InjetarModulosVBA()
-
-            ' Passo 4: Criar template profissional
-            CriarTemplate()
-
-            ' Passo 5: Preencher dados
-            PreencherDados(dados)
-
-            ' Passo 6: Configurar impressão
-            ConfigurarImpressao()
-
-            ' Passo 7: Executar impressão
-            ImprimirTalao()
+            ' Usar novo sistema de mapeamento em vez de impressão
+            EscreverNaPlanilhaMapeada(dados)
 
         Finally
-            ' Passo 8: Fechar Excel
+            ' Fechar Excel se necessário
             FecharExcel()
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Escreve dados na planilha mapeada (substitui impressão)
+    ''' </summary>
+    Public Sub EscreverNaPlanilhaMapeada(dados As DadosTalao)
+        Try
+            ' Usar sistema de mapeamento de planilha
+            Dim mapeamento As New MapeamentoPlanilha()
+            mapeamento.EscreverNaPlanilhaMapeada(dados)
+            
+            ' Verificar se deve salvar ou exibir
+            Dim exibirPlanilha = Boolean.Parse(ConfigurationManager.AppSettings("ExcelVisivel") OrElse "false")
+            
+            If exibirPlanilha Then
+                mapeamento.ExibirParaVisualizacao()
+            Else
+                mapeamento.SalvarSePreciso()
+                mapeamento.FecharExcel()
+            End If
+
+        Catch ex As Exception
+            Throw New Exception("Erro no sistema de mapeamento: " & ex.Message)
         End Try
     End Sub
 
@@ -349,11 +355,11 @@ Public Class ExcelAutomation
     End Sub
 
     ''' <summary>
-    ''' Função para testar automação Excel
+    ''' Função para testar automação Excel com sistema de mapeamento
     ''' </summary>
     Public Sub TestarAutomacao()
         Dim dadosTeste As New DadosTalao()
-        dadosTeste.NomeCliente = "Cliente Teste"
+        dadosTeste.NomeCliente = "Cliente Teste - Mapeamento"
         dadosTeste.EnderecoCliente = "Rua Teste, 123"
         dadosTeste.CEP = "12345-678"
         dadosTeste.Cidade = "Cidade Teste/UF"
@@ -362,13 +368,16 @@ Public Class ExcelAutomation
         dadosTeste.Vendedor = "Vendedor Teste"
 
         Dim produto As New ProdutoTalao()
-        produto.Descricao = "Produto Teste"
+        produto.Codigo = "TEST001"
+        produto.Descricao = "Produto Teste - Mapeamento"
         produto.Quantidade = 1
         produto.Unidade = "UN"
         produto.PrecoUnitario = 10.0
         produto.PrecoTotal = 10.0
+        produto.PrecoVisual = 10000
         dadosTeste.Produtos.Add(produto)
 
-        ProcessarTalaoCompleto(dadosTeste)
+        ' Usar novo sistema de mapeamento
+        EscreverNaPlanilhaMapeada(dadosTeste)
     End Sub
 End Class

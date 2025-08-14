@@ -245,16 +245,16 @@ Public Class ConfiguracaoSistema
     
     Private Sub CarregarConfiguracoes()
         Try
-            NomeMadeireira = ConfigurationManager.AppSettings("NomeMadeireira") Or "Madeireira"
-            EnderecoMadeireira = ConfigurationManager.AppSettings("EnderecoMadeireira") Or ""
-            CidadeMadeireira = ConfigurationManager.AppSettings("CidadeMadeireira") Or ""
-            CEPMadeireira = ConfigurationManager.AppSettings("CEPMadeireira") Or ""
-            TelefoneMadeireira = ConfigurationManager.AppSettings("TelefoneMadeireira") Or ""
-            CNPJMadeireira = ConfigurationManager.AppSettings("CNPJMadeireira") Or ""
-            VendedorPadrao = ConfigurationManager.AppSettings("VendedorPadrao") Or "Sistema"
-            ConexaoBanco = ConfigurationManager.AppSettings("ConexaoBanco") Or ""
-            UsarBancoAccess = Boolean.Parse(ConfigurationManager.AppSettings("UsarBancoAccess") Or "false")
-            CaminhoBackup = ConfigurationManager.AppSettings("CaminhoBackup") Or "C:\Backup\PDV\"
+            NomeMadeireira = If(ConfigurationManager.AppSettings("NomeMadeireira"), "Madeireira")
+            EnderecoMadeireira = If(ConfigurationManager.AppSettings("EnderecoMadeireira"), "")
+            CidadeMadeireira = If(ConfigurationManager.AppSettings("CidadeMadeireira"), "")
+            CEPMadeireira = If(ConfigurationManager.AppSettings("CEPMadeireira"), "")
+            TelefoneMadeireira = If(ConfigurationManager.AppSettings("TelefoneMadeireira"), "")
+            CNPJMadeireira = If(ConfigurationManager.AppSettings("CNPJMadeireira"), "")
+            VendedorPadrao = If(ConfigurationManager.AppSettings("VendedorPadrao"), "Sistema")
+            ConexaoBanco = If(ConfigurationManager.AppSettings("ConexaoBanco"), "")
+            UsarBancoAccess = Boolean.Parse(If(ConfigurationManager.AppSettings("UsarBancoAccess"), "false"))
+            CaminhoBackup = If(ConfigurationManager.AppSettings("CaminhoBackup"), "C:\Backup\PDV\")
         Catch ex As Exception
             ' Valores padrão em caso de erro
             NomeMadeireira = "Madeireira Maria Luiza"
@@ -262,5 +262,69 @@ Public Class ConfiguracaoSistema
             UsarBancoAccess = False
         End Try
     End Sub
+End Class
+#End Region
+
+#Region "Classes para Talão"
+''' <summary>
+''' Dados específicos para geração de talão
+''' </summary>
+Public Class DadosTalao
+    Public Property NomeCliente As String
+    Public Property EnderecoCliente As String
+    Public Property CEP As String
+    Public Property Cidade As String
+    Public Property Telefone As String
+    Public Property FormaPagamento As String
+    Public Property Vendedor As String
+    Public Property NumeroTalao As String
+    Public Property DataVenda As Date
+    Public Property Produtos As List(Of ProdutoTalao)
+    Public Property TotalGeral As Decimal
+    Public Property Desconto As Decimal
+    Public Property Observacoes As String
+    
+    Public Sub New()
+        NomeCliente = ""
+        EnderecoCliente = ""
+        CEP = ""
+        Cidade = ""
+        Telefone = ""
+        FormaPagamento = "À Vista"
+        Vendedor = ""
+        NumeroTalao = ""
+        DataVenda = Date.Now
+        Produtos = New List(Of ProdutoTalao)()
+        TotalGeral = 0
+        Desconto = 0
+        Observacoes = ""
+    End Sub
+End Class
+
+''' <summary>
+''' Produto específico para talão
+''' </summary>
+Public Class ProdutoTalao
+    Public Property Descricao As String
+    Public Property Quantidade As Double
+    Public Property Unidade As String
+    Public Property PrecoUnitario As Decimal
+    Public Property PrecoTotal As Decimal
+    Public Property Observacoes As String
+    
+    Public Sub New()
+        Descricao = ""
+        Quantidade = 0
+        Unidade = "UN"
+        PrecoUnitario = 0
+        PrecoTotal = 0
+        Observacoes = ""
+    End Sub
+    
+    Public ReadOnly Property SubTotal As Decimal
+        Get
+            Return PrecoUnitario * Quantidade
+        End Get
+    End Property
 End Class
 #End Region

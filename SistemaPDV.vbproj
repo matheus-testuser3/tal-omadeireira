@@ -46,6 +46,9 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
@@ -74,6 +77,18 @@
     <Compile Include="ModuloTalao.vb" />
     <Compile Include="ModuloTemplate.vb" />
     <Compile Include="ModuloIntegracao.vb" />
+    <Compile Include="Core\Models\Cliente.vb" />
+    <Compile Include="Core\Models\Produto.vb" />
+    <Compile Include="Core\Models\Venda.vb" />
+    <Compile Include="Core\Services\VendaService.vb" />
+    <Compile Include="Core\Services\ExcelService.vb" />
+    <Compile Include="Core\Services\BackupService.vb" />
+    <Compile Include="Core\Data\DataManager.vb" />
+    <Compile Include="Core\Data\HistoricoManager.vb" />
+    <Compile Include="Core\Utils\Logger.vb" />
+    <Compile Include="Core\Utils\Validator.vb" />
+    <Compile Include="Core\Utils\ConfigManager.vb" />
+    <Compile Include="Core\Utils\CompatibilityAdapter.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>

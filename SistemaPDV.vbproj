@@ -49,6 +49,7 @@
     <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
+    <Reference Include="System.Management" />
   </ItemGroup>
   <ItemGroup>
     <Import Include="Microsoft.VisualBasic" />
@@ -81,6 +82,10 @@
     <Compile Include="CalculationSystem.vb" />
     <Compile Include="LoggingSystem.vb" />
     <Compile Include="ValidationSystem.vb" />
+    <Compile Include="ExcelAutomationFactory.vb" />
+    <Compile Include="EnhancedConfigurationManager.vb" />
+    <Compile Include="GenericRepository.vb" />
+    <Compile Include="CacheManager.vb" />
     <Compile Include="MainPDVForm.vb">
       <SubType>Form</SubType>
     </Compile>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CatalogoProdutos>
+  <Produto>
+    <Id>1</Id>
+    <Codigo>001</Codigo>
+    <Descricao>Tábua de Pinus 2x4m</Descricao>
+    <Unidade>UN</Unidade>
+    <PrecoUnitario>25.00</PrecoUnitario>
+    <Categoria>Madeira Serrada</Categoria>
+    <EstoqueAtual>100</EstoqueAtual>
+    <EstoqueMinimo>10</EstoqueMinimo>
+    <Ativo>true</Ativo>
+  </Produto>
+  <Produto>
+    <Id>2</Id>
+    <Codigo>002</Codigo>
+    <Descricao>Ripão 3x3x3m</Descricao>
+    <Unidade>UN</Unidade>
+    <PrecoUnitario>15.00</PrecoUnitario>
+    <Categoria>Madeira Serrada</Categoria>
+    <EstoqueAtual>150</EstoqueAtual>
+    <EstoqueMinimo>20</EstoqueMinimo>
+    <Ativo>true</Ativo>
+  </Produto>
+  <Produto>
+    <Id>3</Id>
+    <Codigo>003</Codigo>
+    <Descricao>Compensado 18mm</Descricao>
+    <Unidade>M²</Unidade>
+    <PrecoUnitario>45.00</PrecoUnitario>
+    <Categoria>Chapas</Categoria>
+    <EstoqueAtual>50</EstoqueAtual>
+    <EstoqueMinimo>5</EstoqueMinimo>
+    <Ativo>true</Ativo>
+  </Produto>
+  <Produto>
+    <Id>4</Id>
+    <Codigo>004</Codigo>
+    <Descricao>Caibro 5x6x3m</Descricao>
+    <Unidade>UN</Unidade>
+    <PrecoUnitario>12.00</PrecoUnitario>
+    <Categoria>Madeira Serrada</Categoria>
+    <EstoqueAtual>200</EstoqueAtual>
+    <EstoqueMinimo>25</EstoqueMinimo>
+    <Ativo>true</Ativo>
+  </Produto>
+  <Produto>
+    <Id>5</Id>
+    <Codigo>005</Codigo>
+    <Descricao>Viga 6x12x4m</Descricao>
+    <Unidade>UN</Unidade>
+    <PrecoUnitario>35.00</PrecoUnitario>
+    <Categoria>Madeira Estrutural</Categoria>
+    <EstoqueAtual>80</EstoqueAtual>
+    <EstoqueMinimo>10</EstoqueMinimo>
+    <Ativo>true</Ativo>
+  </Produto>
+  <Produto>
+    <Id>6</Id>
+    <Codigo>006</Codigo>
+    <Descricao>Porta de Madeira 2,10x0,80m</Descricao>
+    <Unidade>UN</Unidade>
+    <PrecoUnitario>120.00</PrecoUnitario>
+    <Categoria>Esquadrias</Categoria>
+    <EstoqueAtual>30</EstoqueAtual>
+    <EstoqueMinimo>5</EstoqueMinimo>
+    <Ativo>true</Ativo>
+  </Produto>
+  <Produto>
+    <Id>7</Id>
+    <Codigo>007</Codigo>
+    <Descricao>Janela de Madeira 1,20x1,00m</Descricao>
+    <Unidade>UN</Unidade>
+    <PrecoUnitario>85.00</PrecoUnitario>
+    <Categoria>Esquadrias</Categoria>
+    <EstoqueAtual>25</EstoqueAtual>
+    <EstoqueMinimo>3</EstoqueMinimo>
+    <Ativo>true</Ativo>
+  </Produto>
+  <Produto>
+    <Id>8</Id>
+    <Codigo>008</Codigo>
+    <Descricao>Prego 18x30 (1kg)</Descricao>
+    <Unidade>KG</Unidade>
+    <PrecoUnitario>8.50</PrecoUnitario>
+    <Categoria>Ferragens</Categoria>
+    <EstoqueAtual>500</EstoqueAtual>
+    <EstoqueMinimo>50</EstoqueMinimo>
+    <Ativo>true</Ativo>
+  </Produto>
+  <Produto>
+    <Id>9</Id>
+    <Codigo>009</Codigo>
+    <Descricao>Parafuso Madeira 6x80mm (100un)</Descricao>
+    <Unidade>PCT</Unidade>
+    <PrecoUnitario>25.00</PrecoUnitario>
+    <Categoria>Ferragens</Categoria>
+    <EstoqueAtual>100</EstoqueAtual>
+    <EstoqueMinimo>10</EstoqueMinimo>
+    <Ativo>true</Ativo>
+  </Produto>
+  <Produto>
+    <Id>10</Id>
+    <Codigo>010</Codigo>
+    <Descricao>Verniz Marítimo 3,6L</Descricao>
+    <Unidade>UN</Unidade>
+    <PrecoUnitario>75.00</PrecoUnitario>
+    <Categoria>Acabamentos</Categoria>
+    <EstoqueAtual>40</EstoqueAtual>
+    <EstoqueMinimo>5</EstoqueMinimo>
+    <Ativo>true</Ativo>
+  </Produto>
+</CatalogoProdutos>

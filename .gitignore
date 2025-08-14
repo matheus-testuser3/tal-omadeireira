@@ -4,7 +4,7 @@ obj/
 *.exe
 *.dll
 *.pdb
-*.xml
+SistemaPDV.xml
 
 # Visual Studio files
 .vs/

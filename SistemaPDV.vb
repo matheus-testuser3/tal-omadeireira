@@ -16,6 +16,7 @@ Public Class MainForm
     Private WithEvents lblTitle As Label
     Private WithEvents lblSubtitle As Label
     Private WithEvents btnGerarTalao As Button
+    Private WithEvents btnRelatorios As Button
     Private WithEvents btnConfiguracoes As Button
     Private WithEvents btnSobre As Button
     Private WithEvents btnSair As Button
@@ -94,7 +95,7 @@ Public Class MainForm
 
         ' Botão Gerar Talão (principal)
         btnGerarTalao = New Button()
-        btnGerarTalao.Text = "🧾 GERAR TALÃO"
+        btnGerarTalao.Text = "🧾 GERAR TALÃO (F2)"
         btnGerarTalao.Size = New Size(200, 50)
         btnGerarTalao.Location = New Point(25, 120)
         btnGerarTalao.BackColor = Color.FromArgb(46, 204, 113)
@@ -105,11 +106,24 @@ Public Class MainForm
         btnGerarTalao.Cursor = Cursors.Hand
         pnlSidebar.Controls.Add(btnGerarTalao)
 
+        ' Botão Relatórios
+        btnRelatorios = New Button()
+        btnRelatorios.Text = "📊 RELATÓRIOS (F5)"
+        btnRelatorios.Size = New Size(200, 40)
+        btnRelatorios.Location = New Point(25, 180)
+        btnRelatorios.BackColor = Color.FromArgb(52, 152, 219)
+        btnRelatorios.ForeColor = Color.White
+        btnRelatorios.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular)
+        btnRelatorios.FlatStyle = FlatStyle.Flat
+        btnRelatorios.FlatAppearance.BorderSize = 0
+        btnRelatorios.Cursor = Cursors.Hand
+        pnlSidebar.Controls.Add(btnRelatorios)
+
         ' Botão Configurações
         btnConfiguracoes = New Button()
         btnConfiguracoes.Text = "⚙️ Configurações"
         btnConfiguracoes.Size = New Size(200, 40)
-        btnConfiguracoes.Location = New Point(25, 190)
+        btnConfiguracoes.Location = New Point(25, 230)
         btnConfiguracoes.BackColor = Color.FromArgb(52, 73, 94)
         btnConfiguracoes.ForeColor = Color.White
         btnConfiguracoes.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular)
@@ -122,7 +136,7 @@ Public Class MainForm
         btnSobre = New Button()
         btnSobre.Text = "ℹ️ Sobre o Sistema"
         btnSobre.Size = New Size(200, 40)
-        btnSobre.Location = New Point(25, 240)
+        btnSobre.Location = New Point(25, 280)
         btnSobre.BackColor = Color.FromArgb(52, 73, 94)
         btnSobre.ForeColor = Color.White
         btnSobre.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular)
@@ -164,14 +178,17 @@ Public Class MainForm
         ' Adicionar instruções
         Dim lblInstrucoes As New Label()
         lblInstrucoes.Text = "📋 INSTRUÇÕES DE USO:" & vbCrLf & vbCrLf &
-                            "1. Clique em 'GERAR TALÃO' para abrir o formulário de entrada de dados" & vbCrLf &
+                            "1. Clique em 'GERAR TALÃO' (F2) para nova venda" & vbCrLf &
                             "2. Preencha os dados do cliente e produtos" & vbCrLf &
-                            "3. O sistema irá abrir o Excel automaticamente em segundo plano" & vbCrLf &
-                            "4. O talão será gerado e impresso automaticamente" & vbCrLf &
-                            "5. O Excel será fechado automaticamente após a impressão" & vbCrLf & vbCrLf &
-                            "✅ Não é necessário ter Excel aberto manualmente" & vbCrLf &
-                            "✅ Não é necessário ter planilhas salvas" & vbCrLf &
-                            "✅ Todo o processo é automático!"
+                            "3. O sistema irá gerar e imprimir automaticamente" & vbCrLf &
+                            "4. Use 'RELATÓRIOS' (F5) para consultar vendas" & vbCrLf & vbCrLf &
+                            "⌨️ ATALHOS DE TECLADO:" & vbCrLf &
+                            "• F2 = Nova Venda  • F5 = Relatórios" & vbCrLf &
+                            "• F1 = Sobre  • ESC = Sair" & vbCrLf & vbCrLf &
+                            "✅ Sistema profissional com logs e backup automático" & vbCrLf &
+                            "✅ Validação inteligente de dados" & vbCrLf &
+                            "✅ Histórico completo de vendas" & vbCrLf &
+                            "✅ Todo o processo é automático e seguro!"
         lblInstrucoes.Font = New Font("Segoe UI", 11.0F, FontStyle.Regular)
         lblInstrucoes.ForeColor = Color.FromArgb(52, 73, 94)
         lblInstrucoes.Size = New Size(700, 300)
@@ -191,6 +208,9 @@ Public Class MainForm
         AddHandler btnGerarTalao.MouseLeave, Sub() btnGerarTalao.BackColor = Color.FromArgb(46, 204, 113)
 
         ' Efeito hover para outros botões
+        AddHandler btnRelatorios.MouseEnter, Sub() btnRelatorios.BackColor = Color.FromArgb(41, 128, 185)
+        AddHandler btnRelatorios.MouseLeave, Sub() btnRelatorios.BackColor = Color.FromArgb(52, 152, 219)
+        
         AddHandler btnConfiguracoes.MouseEnter, Sub() btnConfiguracoes.BackColor = Color.FromArgb(44, 62, 80)
         AddHandler btnConfiguracoes.MouseLeave, Sub() btnConfiguracoes.BackColor = Color.FromArgb(52, 73, 94)
 
@@ -223,21 +243,45 @@ Public Class MainForm
     ''' </summary>
     Private Sub ProcessarTalao(dados As DadosTalao)
         Try
-            ' Mostrar mensagem de processamento
+            ' Log do início do processamento
+            Logger.Instance.Info($"Iniciando processamento de talão para cliente: {dados.NomeCliente}")
+            
+            ' Validar dados usando novo sistema
+            Dim erros = CompatibilityAdapter.ValidarDadosTalao(dados)
+            If erros.Count > 0 Then
+                Dim mensagemErro = "Erros encontrados:" & vbCrLf & String.Join(vbCrLf, erros)
+                MessageBox.Show(mensagemErro, "Dados Inválidos", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Logger.Instance.Warning($"Dados inválidos para talão: {String.Join(", ", erros)}")
+                Return
+            End If
+            
+            ' Formatar dados automaticamente
+            CompatibilityAdapter.FormatarDadosCliente(dados)
+            
+            ' Converter para nova arquitetura
+            Dim venda = CompatibilityAdapter.ConvertToVenda(dados)
+            If venda Is Nothing Then
+                MessageBox.Show("Erro ao processar dados da venda.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Return
+            End If
+            
+            ' Mostrar loading com melhor feedback
             Dim loading As New Form()
             loading.Text = "Processando..."
-            loading.Size = New Size(400, 150)
+            loading.Size = New Size(450, 200)
             loading.StartPosition = FormStartPosition.CenterParent
             loading.FormBorderStyle = FormBorderStyle.FixedDialog
             loading.MaximizeBox = False
             loading.MinimizeBox = False
 
             Dim lblLoading As New Label()
-            lblLoading.Text = "🔄 Gerando talão automaticamente..." & vbCrLf & 
-                             "• Abrindo Excel em segundo plano" & vbCrLf &
-                             "• Criando template de talão" & vbCrLf &
-                             "• Preenchendo dados" & vbCrLf &
-                             "• Preparando impressão"
+            lblLoading.Text = "🔄 Gerando talão com sistema otimizado..." & vbCrLf & 
+                             "• Validando dados" & vbCrLf &
+                             "• Iniciando Excel em segundo plano" & vbCrLf &
+                             "• Criando template profissional" & vbCrLf &
+                             "• Preenchendo dados do cliente" & vbCrLf &
+                             "• Configurando impressão" & vbCrLf &
+                             "• Executando impressão automática"
             lblLoading.AutoSize = True
             lblLoading.Location = New Point(20, 20)
             lblLoading.Font = New Font("Segoe UI", 10.0F)
@@ -246,23 +290,55 @@ Public Class MainForm
             loading.Show()
             Application.DoEvents()
 
-            ' Executar automação do Excel
-            Dim excel As New ExcelAutomation()
-            excel.ProcessarTalaoCompleto(dados)
+            ' Usar novo serviço para processar venda
+            Dim vendaService = New VendaService()
+            Dim sucesso = vendaService.ProcessarVenda(venda)
 
             loading.Close()
 
-            ' Sucesso
-            MessageBox.Show("✅ Talão gerado e impresso com sucesso!" & vbCrLf & vbCrLf &
-                          "Cliente: " & dados.NomeCliente & vbCrLf &
-                          "Total de produtos: " & dados.Produtos.Count.ToString() & vbCrLf &
-                          "Vendedor: " & dados.Vendedor,
-                          "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            If sucesso Then
+                ' Sucesso com estatísticas
+                MessageBox.Show("✅ Talão gerado e impresso com sucesso!" & vbCrLf & vbCrLf &
+                              $"Talão: {venda.NumeroTalao}" & vbCrLf &
+                              $"Cliente: {venda.Cliente.Nome}" & vbCrLf &
+                              $"Produtos: {venda.Itens.Count}" & vbCrLf &
+                              $"Valor Total: {venda.ValorTotal:C}" & vbCrLf &
+                              $"Vendedor: {venda.Vendedor}",
+                              "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                              
+                Logger.Instance.Audit("TALAO_GERADO_SUCESSO", 
+                    $"Talão: {venda.NumeroTalao}, Cliente: {venda.Cliente.Nome}, Valor: {venda.ValorTotal:C}",
+                    venda.Vendedor)
+            Else
+                MessageBox.Show("❌ Erro ao gerar talão." & vbCrLf & vbCrLf &
+                              "Verifique:" & vbCrLf &
+                              "• Se o Microsoft Excel está instalado" & vbCrLf &
+                              "• Se há uma impressora configurada" & vbCrLf &
+                              "• Os logs do sistema para mais detalhes",
+                              "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                              
+                Logger.Instance.Error($"Falha ao processar venda {venda.NumeroTalao}")
+            End If
 
         Catch ex As Exception
-            MessageBox.Show("❌ Erro ao gerar talão:" & vbCrLf & vbCrLf & ex.Message & vbCrLf & vbCrLf &
-                          "Verifique se o Microsoft Excel está instalado no computador.",
-                          "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Logger.Instance.Error("Erro crítico ao processar talão", ex)
+            MessageBox.Show("❌ Erro crítico ao gerar talão:" & vbCrLf & vbCrLf & ex.Message & vbCrLf & vbCrLf &
+                          "O erro foi registrado nos logs do sistema.",
+                          "Erro Crítico", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Evento click do botão Relatórios
+    ''' </summary>
+    Private Sub btnRelatorios_Click(sender As Object, e As EventArgs) Handles btnRelatorios.Click
+        Try
+            Logger.Instance.Info("Abrindo formulário de relatórios")
+            Dim formRelatorios = New RelatoriosForm()
+            formRelatorios.ShowDialog(Me)
+        Catch ex As Exception
+            Logger.Instance.Error("Erro ao abrir relatórios", ex)
+            MessageBox.Show("Erro ao abrir relatórios: " & ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
@@ -323,6 +399,40 @@ Public Class MainForm
                           "Excel Não Encontrado", MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End Try
     End Sub
+    
+    ''' <summary>
+    ''' Processa atalhos de teclado
+    ''' </summary>
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        Try
+            Select Case keyData
+                Case Keys.F2
+                    ' F2 = Nova Venda
+                    btnGerarTalao_Click(Nothing, Nothing)
+                    Return True
+                Case Keys.F5
+                    ' F5 = Relatórios
+                    btnRelatorios_Click(Nothing, Nothing)
+                    Return True
+                Case Keys.F1
+                    ' F1 = Sobre
+                    btnSobre_Click(Nothing, Nothing)
+                    Return True
+                Case Keys.Alt Or Keys.F4
+                    ' Alt+F4 = Sair
+                    btnSair_Click(Nothing, Nothing)
+                    Return True
+                Case Keys.Escape
+                    ' ESC = Sair com confirmação
+                    btnSair_Click(Nothing, Nothing)
+                    Return True
+            End Select
+        Catch ex As Exception
+            Logger.Instance.Error("Erro ao processar atalho de teclado", ex)
+        End Try
+        
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
 End Class
 
 ''' <summary>

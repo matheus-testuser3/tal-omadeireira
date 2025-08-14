@@ -41,11 +41,18 @@ Public Class FormPDV
 
     ' Propriedade para retornar dados coletados
     Public Property DadosColetados As DadosTalao
+    
+    ' Serviços
+    Private ReadOnly _dataManager As DataManager
+    Private ReadOnly _logger As Logger
 
     ''' <summary>
     ''' Construtor do formulário
     ''' </summary>
     Public Sub New()
+        _dataManager = DataManager.Instance
+        _logger = Logger.Instance
+        
         InitializeComponent()
         ConfigurarInterface()
         DadosColetados = New DadosTalao()
@@ -419,45 +426,64 @@ Public Class FormPDV
     ''' </summary>
     Private Sub btnConfirmar_Click(sender As Object, e As EventArgs) Handles btnConfirmar.Click
         Try
-            ' Validar dados obrigatórios
-            If String.IsNullOrWhiteSpace(txtNomeCliente.Text) Then
-                MessageBox.Show("Digite o nome do cliente", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                txtNomeCliente.Focus()
-                Return
-            End If
-
-            If dgvProdutos.Rows.Count = 0 Then
-                MessageBox.Show("Adicione pelo menos um produto", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                txtDescricaoProduto.Focus()
-                Return
-            End If
-
-            ' Coletar dados do formulário
-            DadosColetados.NomeCliente = txtNomeCliente.Text
-            DadosColetados.EnderecoCliente = txtEnderecoCliente.Text
-            DadosColetados.CEP = txtCEP.Text
-            DadosColetados.Cidade = txtCidade.Text
-            DadosColetados.Telefone = txtTelefone.Text
+            _logger.Info("Validando dados do formulário PDV")
+            
+            ' Coletar dados do formulário primeiro
+            DadosColetados.NomeCliente = txtNomeCliente.Text.Trim()
+            DadosColetados.EnderecoCliente = txtEnderecoCliente.Text.Trim()
+            DadosColetados.CEP = txtCEP.Text.Trim()
+            DadosColetados.Cidade = txtCidade.Text.Trim()
+            DadosColetados.Telefone = txtTelefone.Text.Trim()
             DadosColetados.FormaPagamento = cmbFormaPagamento.Text
-            DadosColetados.Vendedor = txtVendedor.Text
+            DadosColetados.Vendedor = txtVendedor.Text.Trim()
 
             ' Coletar produtos
             DadosColetados.Produtos.Clear()
             For Each row As DataGridViewRow In dgvProdutos.Rows
-                Dim produto As New ProdutoTalao()
-                produto.Descricao = row.Cells("Descricao").Value.ToString()
-                produto.Quantidade = Convert.ToDouble(row.Cells("Quantidade").Value.ToString())
-                produto.Unidade = row.Cells("Unidade").Value.ToString()
-                produto.PrecoUnitario = Convert.ToDouble(row.Cells("PrecoUnitario").Value.ToString().Replace("R$", "").Replace(",", ".").Trim())
-                produto.PrecoTotal = produto.Quantidade * produto.PrecoUnitario
-                DadosColetados.Produtos.Add(produto)
+                If row.Cells("Descricao").Value IsNot Nothing Then
+                    Dim produto As New ProdutoTalao()
+                    produto.Descricao = row.Cells("Descricao").Value.ToString()
+                    produto.Quantidade = Convert.ToDouble(row.Cells("Quantidade").Value.ToString())
+                    produto.Unidade = row.Cells("Unidade").Value.ToString()
+                    produto.PrecoUnitario = Convert.ToDouble(row.Cells("PrecoUnitario").Value.ToString().Replace("R$", "").Replace(",", ".").Trim())
+                    produto.PrecoTotal = produto.Quantidade * produto.PrecoUnitario
+                    DadosColetados.Produtos.Add(produto)
+                End If
             Next
+
+            ' Usar novo sistema de validação
+            Dim erros = CompatibilityAdapter.ValidarDadosTalao(DadosColetados)
+            
+            If erros.Count > 0 Then
+                Dim mensagem = "Por favor, corrija os seguintes erros:" & vbCrLf & vbCrLf & String.Join(vbCrLf, erros)
+                MessageBox.Show(mensagem, "Dados Inválidos", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                
+                ' Focar no primeiro campo com erro
+                If erros.Any(Function(e) e.Contains("Nome")) Then
+                    txtNomeCliente.Focus()
+                ElseIf erros.Any(Function(e) e.Contains("CEP")) Then
+                    txtCEP.Focus()
+                ElseIf erros.Any(Function(e) e.Contains("Telefone")) Then
+                    txtTelefone.Focus()
+                ElseIf erros.Any(Function(e) e.Contains("produto")) Then
+                    txtDescricaoProduto.Focus()
+                End If
+                
+                _logger.Warning($"Dados inválidos no formulário: {String.Join(", ", erros)}")
+                Return
+            End If
+            
+            ' Formatar dados automaticamente
+            CompatibilityAdapter.FormatarDadosCliente(DadosColetados)
+            
+            _logger.Info($"Dados validados e formatados para cliente: {DadosColetados.NomeCliente}")
 
             ' Fechar formulário com sucesso
             Me.DialogResult = DialogResult.OK
             Me.Close()
 
         Catch ex As Exception
+            _logger.Error("Erro ao validar dados do formulário", ex)
             MessageBox.Show("Erro ao validar dados: " & ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub

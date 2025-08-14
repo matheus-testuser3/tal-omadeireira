@@ -79,6 +79,8 @@
     <Compile Include="ProductSearchManager.vb" />
     <Compile Include="CalendarioSystem.vb" />
     <Compile Include="CalculationSystem.vb" />
+    <Compile Include="LoggingSystem.vb" />
+    <Compile Include="ValidationSystem.vb" />
     <Compile Include="MainPDVForm.vb">
       <SubType>Form</SubType>
     </Compile>

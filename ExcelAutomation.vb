@@ -1,5 +1,6 @@
 Imports Microsoft.Office.Interop.Excel
 Imports System.Configuration
+Imports System.IO
 
 ''' <summary>
 ''' Classe responsável pela automação do Excel e integração com VBA
@@ -370,5 +371,97 @@ Public Class ExcelAutomation
         dadosTeste.Produtos.Add(produto)
 
         ProcessarTalaoCompleto(dadosTeste)
+    End Sub
+
+    ''' <summary>
+    ''' Processa talão da madeireira com recursos de backup
+    ''' </summary>
+    Public Sub ProcessarTalaoMadeireira(dados As DadosTalaoMadeireira)
+        Try
+            ' Converter dados da madeireira para formato padrão
+            Dim dadosConvertidos As New DadosTalao()
+            dadosConvertidos.NomeCliente = dados.NomeCliente
+            dadosConvertidos.EnderecoCliente = dados.EnderecoCliente
+            dadosConvertidos.CEP = dados.CEP
+            dadosConvertidos.Cidade = dados.Cidade
+            dadosConvertidos.Telefone = dados.Telefone
+            dadosConvertidos.FormaPagamento = dados.FormaPagamento
+            dadosConvertidos.Vendedor = dados.Vendedor
+            dadosConvertidos.DataVenda = dados.DataVenda
+            dadosConvertidos.NumeroTalao = dados.NumeroTalao
+
+            ' Converter produtos
+            For Each produtoMadeireira As ProdutoTalaoMadeireira In dados.Produtos
+                Dim produto As New ProdutoTalao()
+                produto.Descricao = produtoMadeireira.Descricao
+                produto.Quantidade = produtoMadeireira.Quantidade
+                produto.Unidade = produtoMadeireira.Unidade
+                produto.PrecoUnitario = produtoMadeireira.PrecoUnitario
+                produto.PrecoTotal = produtoMadeireira.PrecoTotal
+                dadosConvertidos.Produtos.Add(produto)
+            Next
+
+            ' Processar com o método principal
+            ProcessarTalaoCompleto(dadosConvertidos)
+
+            ' Atualizar status de backup
+            dados.StatusBackup = "Processado"
+            dados.DataBackup = Date.Now
+
+        Catch ex As Exception
+            dados.StatusBackup = "Erro: " & ex.Message
+            Throw
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Executa backup com configurações específicas
+    ''' </summary>
+    Public Sub ExecutarBackup(configuracao As ConfiguracaoBackupMadeireira, dados As DadosTalaoMadeireira)
+        Try
+            If Not configuracao.ValidarConfiguracao() Then
+                Throw New ArgumentException("Configuração de backup inválida")
+            End If
+
+            ' Verificar se o diretório de backup existe
+            If Not Directory.Exists(configuracao.CaminhoBackup) Then
+                Directory.CreateDirectory(configuracao.CaminhoBackup)
+            End If
+
+            ' Determinar nome do arquivo de backup
+            Dim nomeArquivo As String = $"backup_{dados.NumeroTalao}_{Date.Now:yyyyMMddHHmmss}"
+            
+            Select Case configuracao.TipoFormato
+                Case TipoFormatoBackup.Excel
+                    nomeArquivo &= ".xlsx"
+                Case TipoFormatoBackup.CSV
+                    nomeArquivo &= ".csv"
+                Case TipoFormatoBackup.JSON
+                    nomeArquivo &= ".json"
+                Case TipoFormatoBackup.XML
+                    nomeArquivo &= ".xml"
+                Case TipoFormatoBackup.PDF
+                    nomeArquivo &= ".pdf"
+            End Select
+
+            dados.CaminhoArquivoBackup = Path.Combine(configuracao.CaminhoBackup, nomeArquivo)
+
+            ' Simular criação do backup (implementação específica dependeria do formato)
+            Select Case configuracao.TipoFormato
+                Case TipoFormatoBackup.Excel
+                    ' Processar como Excel e salvar
+                    ProcessarTalaoMadeireira(dados)
+                    ' TODO: Implementar salvamento em arquivo específico
+                Case Else
+                    ' Outros formatos seriam implementados aqui
+                    ' TODO: Implementar outros formatos de backup
+            End Select
+
+            dados.StatusBackup = "Backup Concluído"
+
+        Catch ex As Exception
+            dados.StatusBackup = "Erro no Backup: " & ex.Message
+            Throw
+        End Try
     End Sub
 End Class

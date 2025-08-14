@@ -379,4 +379,15 @@ Public Class ConfigurationManager
     End Function
     
     #End Region
+    
+    #Region "Métodos Públicos Adicionais"
+    
+    ''' <summary>
+    ''' Obtém valor de configuração genérico com valor padrão (método público)
+    ''' </summary>
+    Public Function GetConfigValuePublic(Of T)(key As String, defaultValue As T) As T
+        Return GetConfigValue(key, defaultValue)
+    End Function
+    
+    #End Region
 End Class

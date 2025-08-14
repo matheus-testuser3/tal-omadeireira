@@ -71,6 +71,12 @@
     <Compile Include="FormPDV.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="EnhancedFormPDV.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ConfigurationForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="ExcelAutomation.vb" />
     <Compile Include="ModuloTalao.vb" />
     <Compile Include="ModuloTemplate.vb" />

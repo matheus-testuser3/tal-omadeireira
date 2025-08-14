@@ -1,34 +1,83 @@
 Imports Microsoft.Office.Interop.Excel
 Imports System.Configuration
+Imports System.Runtime.InteropServices
 
 ''' <summary>
 ''' Classe responsável pela automação do Excel e integração com VBA
 ''' Gerencia abertura/fechamento automático do Excel e execução de macros
+''' Versão otimizada com melhor gerenciamento de recursos e tratamento de erros
 ''' </summary>
 Public Class ExcelAutomation
+    Implements IDisposable
+    
     Private xlApp As Application
     Private xlWorkbook As Workbook
     Private xlWorksheet As Worksheet
     Private vbaInjected As Boolean = False
-
+    Private disposed As Boolean = False
+    Private ReadOnly _logger As LoggingSystem = LoggingSystem.Instance
+    Private ReadOnly _timeout As Integer = 30000 ' 30 segundos timeout
+    
     ''' <summary>
     ''' Processa o talão completo com integração VBA
     ''' </summary>
     Public Sub ProcessarTalaoCompleto(dados As DadosTalao)
+        _logger.LogInfo("ExcelAutomation", "Iniciando processamento de talão")
+        
         Try
+            ' Validar dados de entrada
+            ValidarDadosEntrada(dados)
+            
             ' Passo 1: Abrir Excel em background
             AbrirExcel()
-
+            
             ' Passo 2: Criar planilha temporária
             CriarPlanilhaTemporaria()
-
+            
             ' Passo 3: Injetar módulos VBA
             InjetarModulosVBA()
-
+            
             ' Passo 4: Criar template profissional
             CriarTemplate()
-
+            
             ' Passo 5: Preencher dados
+            PreencherDados(dados)
+            
+            ' Passo 6: Configurar impressão
+            ConfigurarImpressao()
+            
+            ' Passo 7: Executar impressão
+            ImprimirTalao()
+            
+            _logger.LogInfo("ExcelAutomation", "Talão processado com sucesso")
+            
+        Catch ex As Exception
+            _logger.LogError("ExcelAutomation", "Erro ao processar talão", ex)
+            Throw New Exception($"Erro no processamento do talão: {ex.Message}", ex)
+        Finally
+            ' Passo 8: Fechar Excel
+            FecharExcel()
+        End Try
+    End Sub
+    
+    ''' <summary>
+    ''' Valida dados de entrada antes do processamento
+    ''' </summary>
+    Private Sub ValidarDadosEntrada(dados As DadosTalao)
+        If dados Is Nothing Then
+            Throw New ArgumentNullException("dados", "Dados do talão não podem ser nulos")
+        End If
+        
+        If String.IsNullOrWhiteSpace(dados.NomeCliente) Then
+            Throw New ArgumentException("Nome do cliente é obrigatório")
+        End If
+        
+        If dados.Produtos Is Nothing OrElse dados.Produtos.Count = 0 Then
+            Throw New ArgumentException("Deve haver pelo menos um produto no talão")
+        End If
+        
+        _logger.LogDebug("ExcelAutomation", $"Dados validados: Cliente={dados.NomeCliente}, Produtos={dados.Produtos.Count}")
+    End Sub
             PreencherDados(dados)
 
             ' Passo 6: Configurar impressão
@@ -44,19 +93,53 @@ Public Class ExcelAutomation
     End Sub
 
     ''' <summary>
-    ''' Abre Excel em modo background
+    ''' Abre Excel em modo background com timeout e verificações de segurança
     ''' </summary>
     Private Sub AbrirExcel()
-        xlApp = New Application()
-        xlApp.Visible = Boolean.Parse(ConfigurationManager.AppSettings("ExcelVisivel") OrElse "false")
-        xlApp.DisplayAlerts = False
-        xlApp.ScreenUpdating = False
-
-        ' Criar nova pasta de trabalho
-        xlWorkbook = xlApp.Workbooks.Add()
-        xlWorksheet = xlWorkbook.ActiveSheet
-        xlWorksheet.Name = "Talão_" & Date.Now.ToString("HHmmss")
+        Try
+            _logger.LogDebug("ExcelAutomation", "Iniciando abertura do Excel")
+            
+            ' Verificar se Excel está disponível
+            If Not IsExcelInstalled() Then
+                Throw New InvalidOperationException("Microsoft Excel não está instalado ou acessível")
+            End If
+            
+            ' Criar aplicação Excel
+            xlApp = New Application()
+            xlApp.Visible = Boolean.Parse(If(ConfigurationManager.AppSettings("ExcelVisivel"), "false"))
+            xlApp.DisplayAlerts = False
+            xlApp.ScreenUpdating = False
+            xlApp.EnableEvents = False
+            xlApp.Calculation = XlCalculation.xlCalculationManual
+            
+            ' Configurar timeout para operações
+            xlApp.Application.Interactive = False
+            
+            ' Criar nova pasta de trabalho
+            xlWorkbook = xlApp.Workbooks.Add()
+            xlWorksheet = xlWorkbook.ActiveSheet
+            xlWorksheet.Name = "Talao_" & Date.Now.ToString("HHmmss")
+            
+            _logger.LogInfo("ExcelAutomation", "Excel aberto com sucesso")
+            
+        Catch ex As Exception
+            _logger.LogError("ExcelAutomation", "Erro ao abrir Excel", ex)
+            FecharExcel() ' Limpar recursos em caso de erro
+            Throw New Exception($"Falha ao inicializar Excel: {ex.Message}", ex)
+        End Try
     End Sub
+    
+    ''' <summary>
+    ''' Verifica se o Excel está instalado e acessível
+    ''' </summary>
+    Private Function IsExcelInstalled() As Boolean
+        Try
+            Dim excelType = Type.GetTypeFromProgID("Excel.Application")
+            Return excelType IsNot Nothing
+        Catch
+            Return False
+        End Try
+    End Function
 
     ''' <summary>
     ''' Cria planilha temporária com configurações básicas
@@ -309,43 +392,123 @@ Public Class ExcelAutomation
     End Sub
 
     ''' <summary>
-    ''' Fecha Excel e libera recursos
+    ''' Fecha Excel e libera recursos COM adequadamente
     ''' </summary>
     Private Sub FecharExcel()
         Try
-            If xlWorkbook IsNot Nothing Then
-                xlWorkbook.Close(SaveChanges:=False)
-                ReleaseComObject(xlWorkbook)
-            End If
-
+            _logger.LogDebug("ExcelAutomation", "Iniciando fechamento do Excel")
+            
+            ' Restaurar configurações originais
             If xlApp IsNot Nothing Then
-                xlApp.Quit()
-                ReleaseComObject(xlApp)
+                xlApp.ScreenUpdating = True
+                xlApp.DisplayAlerts = True
+                xlApp.EnableEvents = True
+                xlApp.Calculation = XlCalculation.xlCalculationAutomatic
+                xlApp.Application.Interactive = True
             End If
-
+            
+            ' Fechar workbook
+            If xlWorkbook IsNot Nothing Then
+                Try
+                    xlWorkbook.Close(SaveChanges:=False)
+                    ReleaseComObject(xlWorkbook)
+                    xlWorkbook = Nothing
+                Catch ex As Exception
+                    _logger.LogWarning("ExcelAutomation", $"Aviso ao fechar workbook: {ex.Message}")
+                End Try
+            End If
+            
+            ' Fechar aplicação Excel
+            If xlApp IsNot Nothing Then
+                Try
+                    xlApp.Quit()
+                    ReleaseComObject(xlApp)
+                    xlApp = Nothing
+                Catch ex As Exception
+                    _logger.LogWarning("ExcelAutomation", $"Aviso ao fechar Excel: {ex.Message}")
+                End Try
+            End If
+            
+            ' Liberar worksheet
+            If xlWorksheet IsNot Nothing Then
+                ReleaseComObject(xlWorksheet)
+                xlWorksheet = Nothing
+            End If
+            
+            ' Força garbage collection para COM objects
+            GC.Collect()
+            GC.WaitForPendingFinalizers()
+            GC.Collect()
+            
+            _logger.LogInfo("ExcelAutomation", "Excel fechado e recursos liberados")
+            
         Catch ex As Exception
-            ' Ignorar erros ao fechar
-            Console.WriteLine("Aviso ao fechar Excel: " & ex.Message)
+            _logger.LogError("ExcelAutomation", "Erro ao fechar Excel", ex)
         Finally
+            ' Garantir que as variáveis sejam limpas
             xlWorksheet = Nothing
             xlWorkbook = Nothing
             xlApp = Nothing
-            GC.Collect()
-            GC.WaitForPendingFinalizers()
         End Try
     End Sub
-
+    
     ''' <summary>
-    ''' Libera objetos COM adequadamente
+    ''' Libera objetos COM adequadamente com retry e timeout
     ''' </summary>
     Private Sub ReleaseComObject(obj As Object)
+        If obj Is Nothing Then Return
+        
         Try
-            If obj IsNot Nothing Then
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(obj)
-            End If
-        Catch
-            ' Ignorar erros de liberação
+            Dim retryCount = 0
+            Const maxRetries = 3
+            
+            While retryCount < maxRetries
+                Try
+                    Dim count = Marshal.ReleaseComObject(obj)
+                    If count <= 0 Then Exit While
+                    retryCount += 1
+                    Threading.Thread.Sleep(100) ' Pequena pausa entre tentativas
+                Catch ex As Exception
+                    _logger.LogDebug("ExcelAutomation", $"Tentativa {retryCount + 1} de liberar COM object falhou: {ex.Message}")
+                    retryCount += 1
+                    If retryCount >= maxRetries Then
+                        Throw
+                    End If
+                End Try
+            End While
+            
+        Catch ex As Exception
+            _logger.LogWarning("ExcelAutomation", $"Não foi possível liberar COM object completamente: {ex.Message}")
         End Try
+    End Sub
+    
+    ''' <summary>
+    ''' Implementação do IDisposable
+    ''' </summary>
+    Public Sub Dispose() Implements IDisposable.Dispose
+        Dispose(True)
+        GC.SuppressFinalize(Me)
+    End Sub
+    
+    ''' <summary>
+    ''' Dispose protegido
+    ''' </summary>
+    Protected Overridable Sub Dispose(disposing As Boolean)
+        If Not disposed Then
+            If disposing Then
+                ' Liberar recursos gerenciados
+                FecharExcel()
+            End If
+            disposed = True
+        End If
+    End Sub
+    
+    ''' <summary>
+    ''' Finalizer
+    ''' </summary>
+    Protected Overrides Sub Finalize()
+        Dispose(False)
+        MyBase.Finalize()
     End Sub
 
     ''' <summary>

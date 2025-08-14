@@ -5,6 +5,7 @@ Imports System.Configuration
 ''' <summary>
 ''' Formulário de entrada de dados para geração de talão
 ''' Interface para coleta de dados do cliente e produtos
+''' Versão otimizada com validação em tempo real e melhor UX
 ''' </summary>
 Public Class FormPDV
     Inherits Form
@@ -38,9 +39,19 @@ Public Class FormPDV
     Private WithEvents btnConfirmar As Button
     Private WithEvents btnCancelar As Button
     Private WithEvents btnDadosTeste As Button
+    
+    ' Labels de status de validação
+    Private lblStatusNome As Label
+    Private lblStatusCEP As Label
+    Private lblStatusTelefone As Label
+    Private lblStatusProdutos As Label
 
     ' Propriedade para retornar dados coletados
     Public Property DadosColetados As DadosTalao
+    
+    ' Sistema de logging e validação
+    Private ReadOnly _logger As LoggingSystem = LoggingSystem.Instance
+    Private _validationErrors As New Dictionary(Of String, String)()
 
     ''' <summary>
     ''' Construtor do formulário

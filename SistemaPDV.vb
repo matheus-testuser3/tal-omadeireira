@@ -1,6 +1,7 @@
 Imports System.Windows.Forms
 Imports System.Drawing
 Imports System.Configuration
+Imports System.IO
 
 ''' <summary>
 ''' Formulário principal do Sistema PDV - Madeireira Maria Luiza
@@ -359,5 +360,155 @@ Public Class ProdutoTalao
 
     Public Sub New()
         Unidade = "UN"
+    End Sub
+End Class
+
+''' <summary>
+''' Enumeração para tipos de formato de backup
+''' </summary>
+Public Enum TipoFormatoBackup
+    Excel = 1
+    CSV = 2
+    JSON = 3
+    XML = 4
+    PDF = 5
+End Enum
+
+''' <summary>
+''' Estrutura de dados específica para talão da madeireira com recursos de backup
+''' </summary>
+Public Class DadosTalaoMadeireira
+    Public Property NomeCliente As String
+    Public Property EnderecoCliente As String
+    Public Property CEP As String
+    Public Property Cidade As String
+    Public Property Telefone As String
+    Public Property Produtos As List(Of ProdutoTalaoMadeireira)
+    Public Property FormaPagamento As String
+    Public Property Vendedor As String
+    Public Property DataVenda As Date
+    Public Property NumeroTalao As String
+    Public Property DataBackup As Date
+    Public Property VersaoBackup As String
+    Public Property StatusBackup As String
+    Public Property CaminhoArquivoBackup As String
+
+    Public Sub New()
+        Produtos = New List(Of ProdutoTalaoMadeireira)()
+        DataVenda = Date.Now
+        DataBackup = Date.Now
+        NumeroTalao = Date.Now.ToString("yyyyMMddHHmmss")
+        VersaoBackup = "1.0"
+        StatusBackup = "Pendente"
+    End Sub
+End Class
+
+''' <summary>
+''' Estrutura de dados para produtos do talão da madeireira com recursos de backup
+''' </summary>
+Public Class ProdutoTalaoMadeireira
+    Public Property Descricao As String
+    Public Property Quantidade As Double
+    Public Property Unidade As String
+    Public Property PrecoUnitario As Double
+    Public Property PrecoTotal As Double
+    Public Property CodigoProduto As String
+    Public Property CategoriaProduto As String
+    Public Property DataCadastro As Date
+    Public Property StatusBackup As String
+
+    Public Sub New()
+        Unidade = "UN"
+        DataCadastro = Date.Now
+        StatusBackup = "Ativo"
+    End Sub
+End Class
+
+''' <summary>
+''' Classe de configuração para backup da madeireira
+''' </summary>
+Public Class ConfiguracaoBackupMadeireira
+    Public Property HabilitarBackupAutomatico As Boolean
+    Public Property TipoFormato As TipoFormatoBackup
+    Public Property CaminhoBackup As String
+    Public Property IntervaloBackupMinutos As Integer
+    Public Property ManterBackupsAntigos As Boolean
+    Public Property QuantidadeMaximaBackups As Integer
+    Public Property CompactarBackups As Boolean
+    Public Property CriptografarBackups As Boolean
+    Public Property ChaveCriptografia As String
+    Public Property NotificarErrosBackup As Boolean
+    Public Property EmailNotificacao As String
+
+    Public Sub New()
+        HabilitarBackupAutomatico = True
+        TipoFormato = TipoFormatoBackup.Excel
+        CaminhoBackup = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) & "\BackupMadeireira"
+        IntervaloBackupMinutos = 60
+        ManterBackupsAntigos = True
+        QuantidadeMaximaBackups = 30
+        CompactarBackups = False
+        CriptografarBackups = False
+        NotificarErrosBackup = True
+        EmailNotificacao = ""
+    End Sub
+
+    ''' <summary>
+    ''' Valida as configurações de backup
+    ''' </summary>
+    Public Function ValidarConfiguracao() As Boolean
+        If String.IsNullOrEmpty(CaminhoBackup) Then Return False
+        If IntervaloBackupMinutos <= 0 Then Return False
+        If QuantidadeMaximaBackups <= 0 Then Return False
+        If CriptografarBackups AndAlso String.IsNullOrEmpty(ChaveCriptografia) Then Return False
+        
+        Return True
+    End Function
+
+    ''' <summary>
+    ''' Carrega configurações do App.config
+    ''' </summary>
+    Public Sub CarregarConfiguracoes()
+        Try
+            Dim config = ConfigurationManager.AppSettings
+            
+            If config("BackupAutomatico") IsNot Nothing Then
+                Boolean.TryParse(config("BackupAutomatico"), HabilitarBackupAutomatico)
+            End If
+            
+            If config("CaminhoBackup") IsNot Nothing Then
+                CaminhoBackup = config("CaminhoBackup")
+            End If
+            
+            If config("IntervaloBackup") IsNot Nothing Then
+                Integer.TryParse(config("IntervaloBackup"), IntervaloBackupMinutos)
+            End If
+            
+        Catch ex As Exception
+            ' Usar valores padrão em caso de erro
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Salva configurações no App.config
+    ''' </summary>
+    Public Sub SalvarConfiguracoes()
+        Try
+            Dim config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None)
+            
+            config.AppSettings.Settings.Remove("BackupAutomatico")
+            config.AppSettings.Settings.Add("BackupAutomatico", HabilitarBackupAutomatico.ToString())
+            
+            config.AppSettings.Settings.Remove("CaminhoBackup")
+            config.AppSettings.Settings.Add("CaminhoBackup", CaminhoBackup)
+            
+            config.AppSettings.Settings.Remove("IntervaloBackup")
+            config.AppSettings.Settings.Add("IntervaloBackup", IntervaloBackupMinutos.ToString())
+            
+            config.Save(ConfigurationSaveMode.Modified)
+            
+        Catch ex As Exception
+            ' Falhar silenciosamente se não conseguir salvar
+        End Try
     End Sub
 End Class

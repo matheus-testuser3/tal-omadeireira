@@ -197,6 +197,36 @@ Public Class MainForm
 
         ' Efeitos visuais nos botões
         AdicionarEfeitosBotoes()
+        
+        ' Inicializar sistemas
+        InicializarSistemas()
+    End Sub
+    
+    ''' <summary>
+    ''' Inicializa sistemas do PDV
+    ''' </summary>
+    Private Sub InicializarSistemas()
+        Try
+            ' Inicializar logging
+            Logger.Instance.Info("=== SISTEMA PDV INICIADO ===")
+            Logger.Instance.Info($"Versão: 2.0.0 - Edição Profissional")
+            Logger.Instance.Info($"Empresa: {ConfigManager.Instance.NomeMadeireira}")
+            
+            ' Inicializar DataManager (carrega dados)
+            Dim stats = DataManager.Instance.ObterEstatisticasCache()
+            Logger.Instance.Info($"Dados carregados: {stats}")
+            
+            ' Inicializar BackupService se configurado
+            Dim config = ConfigManager.Instance
+            If config.BackupAutomatico Then
+                Logger.Instance.Info("Backup automático configurado")
+            End If
+            
+            Logger.Instance.Audit("SISTEMA_INICIADO", "Sistema PDV iniciado com sucesso", "Sistema")
+            
+        Catch ex As Exception
+            Logger.Instance.Error("Erro ao inicializar sistemas", ex)
+        End Try
     End Sub
 
     ''' <summary>
@@ -346,30 +376,46 @@ Public Class MainForm
     ''' Evento click do botão Configurações
     ''' </summary>
     Private Sub btnConfiguracoes_Click(sender As Object, e As EventArgs) Handles btnConfiguracoes.Click
-        MessageBox.Show("🔧 Módulo de Configurações" & vbCrLf & vbCrLf &
-                       "Em desenvolvimento. Funcionalidades planejadas:" & vbCrLf &
-                       "• Configuração de impressora padrão" & vbCrLf &
-                       "• Dados da madeireira" & vbCrLf &
-                       "• Layout do talão" & vbCrLf &
-                       "• Produtos cadastrados",
-                       "Configurações", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Try
+            Logger.Instance.Info("Abrindo formulário de configurações")
+            Dim formConfig = New ConfiguracaoForm()
+            formConfig.ShowDialog(Me)
+        Catch ex As Exception
+            Logger.Instance.Error("Erro ao abrir configurações", ex)
+            MessageBox.Show("Erro ao abrir configurações: " & ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     ''' <summary>
     ''' Evento click do botão Sobre
     ''' </summary>
     Private Sub btnSobre_Click(sender As Object, e As EventArgs) Handles btnSobre.Click
-        MessageBox.Show("📋 Sistema PDV - " & nomeMadeireira & vbCrLf & vbCrLf &
-                       "Versão: 1.0.0" & vbCrLf &
-                       "Desenvolvido por: matheus-testuser3" & vbCrLf & vbCrLf &
-                       "🎯 Características:" & vbCrLf &
-                       "• Interface moderna em VB.NET" & vbCrLf &
-                       "• Integração automática com Excel" & vbCrLf &
-                       "• Geração de talões profissionais" & vbCrLf &
-                       "• Execução de VBA incorporado" & vbCrLf &
-                       "• Impressão automática" & vbCrLf & vbCrLf &
-                       "© 2024 - Todos os direitos reservados",
-                       "Sobre o Sistema", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Try
+            Dim configManager = ConfigManager.Instance
+            Dim dataManager = DataManager.Instance
+            
+            MessageBox.Show("📋 Sistema PDV - " & configManager.NomeMadeireira & vbCrLf & vbCrLf &
+                           "Versão: 2.0.0 - Edição Profissional" & vbCrLf &
+                           "Desenvolvido por: matheus-testuser3" & vbCrLf & vbCrLf &
+                           "🎯 CARACTERÍSTICAS PROFISSIONAIS:" & vbCrLf &
+                           "• Interface moderna em VB.NET com atalhos" & vbCrLf &
+                           "• Sistema de logs estruturado e auditoria" & vbCrLf &
+                           "• Backup automático e recuperação" & vbCrLf &
+                           "• Validação inteligente de dados" & vbCrLf &
+                           "• Histórico completo de vendas" & vbCrLf &
+                           "• Relatórios profissionais" & vbCrLf &
+                           "• Catálogo de produtos com auto-complete" & vbCrLf &
+                           "• Configurações centralizadas" & vbCrLf & vbCrLf &
+                           "📊 ESTATÍSTICAS:" & vbCrLf &
+                           "• " & dataManager.ObterEstatisticasCache() & vbCrLf & vbCrLf &
+                           "© 2024 - Sistema PDV Profissional",
+                           "Sobre o Sistema", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                           
+            Logger.Instance.Info("Informações do sistema visualizadas")
+        Catch ex As Exception
+            Logger.Instance.Error("Erro ao exibir informações sobre", ex)
+            MessageBox.Show("Erro ao exibir informações.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     ''' <summary>

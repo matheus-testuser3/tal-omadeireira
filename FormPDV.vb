@@ -56,6 +56,9 @@ Public Class FormPDV
         InitializeComponent()
         ConfigurarInterface()
         DadosColetados = New DadosTalao()
+        
+        ' Carregar produtos para auto-complete
+        CarregarProdutosTeste()
     End Sub
 
     ''' <summary>
@@ -376,11 +379,64 @@ Public Class FormPDV
     End Sub
 
     ''' <summary>
-    ''' Carrega produtos típicos de madeireira para facilitar seleção
+    ''' Evento quando o campo de descrição perde o foco (para auto-completar dados)
+    ''' </summary>
+    Private Sub txtDescricaoProduto_Leave(sender As Object, e As EventArgs) Handles txtDescricaoProduto.Leave
+        Try
+            If Not String.IsNullOrWhiteSpace(txtDescricaoProduto.Text) Then
+                ' Buscar produto no catálogo
+                Dim produtos = _dataManager.BuscarProdutosPorDescricao(txtDescricaoProduto.Text)
+                
+                If produtos.Count = 1 Then
+                    ' Produto encontrado - preencher automaticamente
+                    Dim produto = produtos.First()
+                    txtPrecoUnitario.Text = produto.PrecoUnitario.ToString("F2")
+                    
+                    ' Definir unidade se não estiver selecionada
+                    If cmbUnidade.SelectedIndex = -1 OrElse String.IsNullOrEmpty(cmbUnidade.Text) Then
+                        cmbUnidade.Text = produto.Unidade
+                    End If
+                    
+                    ' Atualizar descrição para a versão completa
+                    txtDescricaoProduto.Text = produto.Descricao
+                    
+                    _logger.Info($"Produto auto-completado: {produto.Descricao}")
+                ElseIf produtos.Count > 1 Then
+                    ' Múltiplos produtos encontrados - mostrar sugestões
+                    Dim sugestoes = String.Join(vbCrLf, produtos.Take(5).Select(Function(p) $"{p.Codigo} - {p.Descricao} - {p.PrecoUnitario:C}"))
+                    MessageBox.Show($"Múltiplos produtos encontrados:{vbCrLf}{sugestoes}", 
+                                  "Sugestões de Produtos", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End If
+            End If
+        Catch ex As Exception
+            _logger.Warning("Erro ao buscar produto para auto-complete", ex)
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Carrega produtos do catálogo para auto-complete
     ''' </summary>
     Private Sub CarregarProdutosTeste()
-        ' Esta função poderia carregar de um banco de dados
-        ' Por enquanto, deixaremos para entrada manual
+        Try
+            ' Carregar produtos do catálogo
+            Dim produtos = _dataManager.ObterProdutosAtivos()
+            
+            ' Configurar auto-complete no campo de descrição
+            Dim source = New AutoCompleteStringCollection()
+            For Each produto In produtos
+                source.Add(produto.Descricao)
+                source.Add($"{produto.Codigo} - {produto.Descricao}")
+            Next
+            
+            txtDescricaoProduto.AutoCompleteMode = AutoCompleteMode.SuggestAppend
+            txtDescricaoProduto.AutoCompleteSource = AutoCompleteSource.CustomSource
+            txtDescricaoProduto.AutoCompleteCustomSource = source
+            
+            _logger.Info($"Auto-complete configurado com {produtos.Count} produtos")
+            
+        Catch ex As Exception
+            _logger.Warning("Erro ao carregar produtos para auto-complete", ex)
+        End Try
     End Sub
 
     ''' <summary>

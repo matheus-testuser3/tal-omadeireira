@@ -4,7 +4,7 @@ Imports System.Configuration
 
 ''' <summary>
 ''' Formulário principal do Sistema PDV - Madeireira Maria Luiza
-''' Interface moderna com menu lateral e acesso às funcionalidades
+''' Interface moderna integrada com todas as funcionalidades
 ''' </summary>
 Public Class MainForm
     Inherits Form
@@ -15,349 +15,355 @@ Public Class MainForm
     Private WithEvents pnlHeader As Panel
     Private WithEvents lblTitle As Label
     Private WithEvents lblSubtitle As Label
+    Private WithEvents lblStatusSistema As Label
+    Private WithEvents btnPDVCompleto As Button
     Private WithEvents btnGerarTalao As Button
+    Private WithEvents btnGestaoClientes As Button
+    Private WithEvents btnGestaoEstoque As Button
+    Private WithEvents btnRelatorios As Button
     Private WithEvents btnConfiguracoes As Button
     Private WithEvents btnSobre As Button
     Private WithEvents btnSair As Button
     Private WithEvents picLogo As PictureBox
 
+    ' Sistema integrado
+    Private _database As DatabaseManager
+    Private _config As ConfiguracaoSistema
+    Private _mainPDVForm As MainPDVForm
+
     ' Dados da madeireira
-    Private ReadOnly nomeMadeireira As String = ConfigurationManager.AppSettings("NomeMadeireira")
-    Private ReadOnly enderecoMadeireira As String = ConfigurationManager.AppSettings("EnderecoMadeireira")
+    Private ReadOnly nomeMadeireira As String
+    Private ReadOnly enderecoMadeireira As String
 
     ''' <summary>
     ''' Construtor do formulário principal
     ''' </summary>
     Public Sub New()
-        InitializeComponent()
-        ConfigurarInterface()
+        Try
+            _config = New ConfiguracaoSistema()
+            nomeMadeireira = _config.NomeMadeireira
+            enderecoMadeireira = _config.EnderecoMadeireira
+            
+            InitializeComponent()
+            InicializarSistema()
+            ConfigurarInterface()
+        Catch ex As Exception
+            MessageBox.Show($"Erro ao inicializar sistema: {ex.Message}", "Erro Crítico", 
+                          MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     ''' <summary>
     ''' Inicializa os componentes da interface
     ''' </summary>
     Private Sub InitializeComponent()
-        ' Configurações do formulário
-        Me.Text = "Sistema PDV - " & nomeMadeireira
-        Me.Size = New Size(1200, 800)
+        ' Configurações do formulário principal
+        Me.Text = $"Sistema PDV Integrado - {nomeMadeireira}"
+        Me.Size = New Size(1000, 700)
         Me.StartPosition = FormStartPosition.CenterScreen
+        Me.WindowState = FormWindowState.Maximized
         Me.BackColor = Color.WhiteSmoke
-        Me.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular)
+        Me.Icon = Nothing
 
-        ' Painel lateral (sidebar)
-        pnlSidebar = New Panel()
-        pnlSidebar.Size = New Size(250, Me.Height)
-        pnlSidebar.Dock = DockStyle.Left
-        pnlSidebar.BackColor = Color.FromArgb(41, 53, 65)
-        Me.Controls.Add(pnlSidebar)
-
-        ' Painel principal
-        pnlMain = New Panel()
-        pnlMain.Dock = DockStyle.Fill
-        pnlMain.BackColor = Color.WhiteSmoke
-        pnlMain.Padding = New Padding(20)
-        Me.Controls.Add(pnlMain)
-
-        ' Header do painel principal
-        pnlHeader = New Panel()
-        pnlHeader.Size = New Size(pnlMain.Width - 40, 120)
-        pnlHeader.BackColor = Color.White
-        pnlHeader.Location = New Point(20, 20)
-        pnlHeader.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
-        pnlMain.Controls.Add(pnlHeader)
-
-        ' Logo da madeireira
-        picLogo = New PictureBox()
-        picLogo.Size = New Size(80, 80)
-        picLogo.Location = New Point(200, 10)
-        picLogo.BackColor = Color.LightGray
-        picLogo.BorderStyle = BorderStyle.FixedSingle
-        pnlSidebar.Controls.Add(picLogo)
-
-        ' Título principal
-        lblTitle = New Label()
-        lblTitle.Text = nomeMadeireira
-        lblTitle.Font = New Font("Segoe UI", 18.0F, FontStyle.Bold)
-        lblTitle.ForeColor = Color.FromArgb(52, 73, 94)
-        lblTitle.Size = New Size(600, 40)
-        lblTitle.Location = New Point(20, 20)
-        pnlHeader.Controls.Add(lblTitle)
-
-        ' Subtítulo
-        lblSubtitle = New Label()
-        lblSubtitle.Text = "Sistema de Ponto de Venda Integrado com Geração Automática de Talões"
-        lblSubtitle.Font = New Font("Segoe UI", 11.0F, FontStyle.Regular)
-        lblSubtitle.ForeColor = Color.FromArgb(127, 140, 141)
-        lblSubtitle.Size = New Size(600, 25)
-        lblSubtitle.Location = New Point(20, 65)
-        pnlHeader.Controls.Add(lblSubtitle)
-
-        ' Botão Gerar Talão (principal)
-        btnGerarTalao = New Button()
-        btnGerarTalao.Text = "🧾 GERAR TALÃO"
-        btnGerarTalao.Size = New Size(200, 50)
-        btnGerarTalao.Location = New Point(25, 120)
-        btnGerarTalao.BackColor = Color.FromArgb(46, 204, 113)
-        btnGerarTalao.ForeColor = Color.White
-        btnGerarTalao.Font = New Font("Segoe UI", 12.0F, FontStyle.Bold)
-        btnGerarTalao.FlatStyle = FlatStyle.Flat
-        btnGerarTalao.FlatAppearance.BorderSize = 0
-        btnGerarTalao.Cursor = Cursors.Hand
-        pnlSidebar.Controls.Add(btnGerarTalao)
-
-        ' Botão Configurações
-        btnConfiguracoes = New Button()
-        btnConfiguracoes.Text = "⚙️ Configurações"
-        btnConfiguracoes.Size = New Size(200, 40)
-        btnConfiguracoes.Location = New Point(25, 190)
-        btnConfiguracoes.BackColor = Color.FromArgb(52, 73, 94)
-        btnConfiguracoes.ForeColor = Color.White
-        btnConfiguracoes.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular)
-        btnConfiguracoes.FlatStyle = FlatStyle.Flat
-        btnConfiguracoes.FlatAppearance.BorderSize = 0
-        btnConfiguracoes.Cursor = Cursors.Hand
-        pnlSidebar.Controls.Add(btnConfiguracoes)
-
-        ' Botão Sobre
-        btnSobre = New Button()
-        btnSobre.Text = "ℹ️ Sobre o Sistema"
-        btnSobre.Size = New Size(200, 40)
-        btnSobre.Location = New Point(25, 240)
-        btnSobre.BackColor = Color.FromArgb(52, 73, 94)
-        btnSobre.ForeColor = Color.White
-        btnSobre.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular)
-        btnSobre.FlatStyle = FlatStyle.Flat
-        btnSobre.FlatAppearance.BorderSize = 0
-        btnSobre.Cursor = Cursors.Hand
-        pnlSidebar.Controls.Add(btnSobre)
-
-        ' Botão Sair
-        btnSair = New Button()
-        btnSair.Text = "🚪 Sair"
-        btnSair.Size = New Size(200, 40)
-        btnSair.Location = New Point(25, Me.Height - 80)
-        btnSair.BackColor = Color.FromArgb(231, 76, 60)
-        btnSair.ForeColor = Color.White
-        btnSair.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular)
-        btnSair.FlatStyle = FlatStyle.Flat
-        btnSair.FlatAppearance.BorderSize = 0
-        btnSair.Cursor = Cursors.Hand
-        btnSair.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left
-        pnlSidebar.Controls.Add(btnSair)
+        CriarMenuLateral()
+        CriarAreaPrincipal()
     End Sub
 
     ''' <summary>
-    ''' Configura detalhes adicionais da interface
+    ''' Inicializa os sistemas integrados
+    ''' </summary>
+    Private Sub InicializarSistema()
+        Try
+            ' Inicializar banco de dados
+            _database = DatabaseManager.Instance
+            
+            ' Atualizar status
+            lblStatusSistema.Text = _database.VerificarConexao()
+            lblStatusSistema.ForeColor = If(_database.VerificarConexao().Contains("Access"), Color.Green, Color.Orange)
+            
+            Console.WriteLine("Sistema PDV integrado inicializado com sucesso")
+            
+        Catch ex As Exception
+            lblStatusSistema.Text = "Erro na inicialização"
+            lblStatusSistema.ForeColor = Color.Red
+            Console.WriteLine($"Erro na inicialização: {ex.Message}")
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Cria o menu lateral moderno
+    ''' </summary>
+    Private Sub CriarMenuLateral()
+        pnlSidebar = New Panel() With {
+            .Dock = DockStyle.Left,
+            .Width = 250,
+            .BackColor = Color.FromArgb(45, 45, 48),
+            .Padding = New Padding(0, 20, 0, 20)
+        }
+
+        ' Logo da empresa
+        picLogo = New PictureBox() With {
+            .Size = New Size(200, 80),
+            .Location = New Point(25, 20),
+            .BackColor = Color.White,
+            .SizeMode = PictureBoxSizeMode.CenterImage
+        }
+
+        ' Título da empresa
+        lblTitle = New Label() With {
+            .Text = nomeMadeireira.ToUpper(),
+            .Location = New Point(25, 110),
+            .Size = New Size(200, 40),
+            .ForeColor = Color.White,
+            .Font = New Font("Segoe UI", 12, FontStyle.Bold),
+            .TextAlign = ContentAlignment.MiddleCenter
+        }
+
+        lblSubtitle = New Label() With {
+            .Text = "SISTEMA PDV INTEGRADO",
+            .Location = New Point(25, 150),
+            .Size = New Size(200, 20),
+            .ForeColor = Color.LightGray,
+            .Font = New Font("Segoe UI", 9),
+            .TextAlign = ContentAlignment.MiddleCenter
+        }
+
+        ' Botões do menu principal
+        btnPDVCompleto = CriarBotaoMenu("🛒 PDV COMPLETO", 200, Color.FromArgb(0, 120, 215))
+        btnGerarTalao = CriarBotaoMenu("🧾 GERAR TALÃO", 250, Color.FromArgb(0, 153, 51))
+        btnGestaoClientes = CriarBotaoMenu("👥 GESTÃO CLIENTES", 300, Color.FromArgb(153, 102, 51))
+        btnGestaoEstoque = CriarBotaoMenu("📦 GESTÃO ESTOQUE", 350, Color.FromArgb(128, 0, 128))
+        btnRelatorios = CriarBotaoMenu("📊 RELATÓRIOS", 400, Color.FromArgb(255, 102, 0))
+        btnConfiguracoes = CriarBotaoMenu("⚙️ CONFIGURAÇÕES", 450, Color.FromArgb(105, 105, 105))
+
+        ' Botões de sistema
+        btnSobre = CriarBotaoMenu("ℹ️ SOBRE", 520, Color.FromArgb(70, 130, 180))
+        btnSair = CriarBotaoMenu("❌ SAIR", 570, Color.FromArgb(220, 20, 60))
+
+        pnlSidebar.Controls.AddRange({
+            picLogo, lblTitle, lblSubtitle,
+            btnPDVCompleto, btnGerarTalao, btnGestaoClientes, btnGestaoEstoque,
+            btnRelatorios, btnConfiguracoes, btnSobre, btnSair
+        })
+
+        Me.Controls.Add(pnlSidebar)
+    End Sub
+
+    ''' <summary>
+    ''' Cria um botão do menu com estilo moderno
+    ''' </summary>
+    Private Function CriarBotaoMenu(texto As String, top As Integer, cor As Color) As Button
+        Dim btn As New Button() With {
+            .Text = texto,
+            .Size = New Size(220, 40),
+            .Location = New Point(15, top),
+            .BackColor = cor,
+            .ForeColor = Color.White,
+            .FlatStyle = FlatStyle.Flat,
+            .Font = New Font("Segoe UI", 10, FontStyle.Bold),
+            .TextAlign = ContentAlignment.MiddleLeft,
+            .Padding = New Padding(10, 0, 0, 0),
+            .Cursor = Cursors.Hand
+        }
+
+        btn.FlatAppearance.BorderSize = 0
+        btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(255, Math.Min(255, cor.R + 30), Math.Min(255, cor.G + 30), Math.Min(255, cor.B + 30))
+
+        Return btn
+    End Function
+
+    ''' <summary>
+    ''' Cria a área principal de conteúdo
+    ''' </summary>
+    Private Sub CriarAreaPrincipal()
+        ' Header
+        pnlHeader = New Panel() With {
+            .Dock = DockStyle.Top,
+            .Height = 80,
+            .BackColor = Color.White,
+            .Padding = New Padding(30, 20, 30, 20)
+        }
+
+        lblTitle = New Label() With {
+            .Text = "Sistema PDV - Madeireira Maria Luiza",
+            .Font = New Font("Segoe UI", 20, FontStyle.Bold),
+            .ForeColor = Color.FromArgb(45, 45, 48),
+            .Dock = DockStyle.Left,
+            .AutoSize = True
+        }
+
+        lblStatusSistema = New Label() With {
+            .Text = "Inicializando sistema...",
+            .Font = New Font("Segoe UI", 10),
+            .ForeColor = Color.Gray,
+            .Dock = DockStyle.Right,
+            .AutoSize = True,
+            .TextAlign = ContentAlignment.MiddleRight
+        }
+
+        pnlHeader.Controls.AddRange({lblTitle, lblStatusSistema})
+
+        ' Área principal
+        pnlMain = New Panel() With {
+            .Dock = DockStyle.Fill,
+            .BackColor = Color.WhiteSmoke,
+            .Padding = New Padding(30)
+        }
+
+        Me.Controls.AddRange({pnlHeader, pnlMain})
+        CriarTelaInicial()
+    End Sub
+
+    ''' <summary>
+    ''' Cria a tela inicial com informações do sistema
+    ''' </summary>
+    Private Sub CriarTelaInicial()
+        Dim lblBemVindo As New Label() With {
+            .Text = $"Bem-vindo ao Sistema PDV Integrado!",
+            .Font = New Font("Segoe UI", 24, FontStyle.Bold),
+            .ForeColor = Color.FromArgb(45, 45, 48),
+            .Location = New Point(50, 50),
+            .AutoSize = True
+        }
+
+        Dim lblDescricao As New Label() With {
+            .Text = "Sistema completo de Ponto de Venda com integração total:" & Environment.NewLine & Environment.NewLine &
+                   "✅ PDV Completo - Interface integrada com todas as funcionalidades" & Environment.NewLine &
+                   "✅ Geração de Talões - Sistema automatizado com Excel" & Environment.NewLine &
+                   "✅ Gestão de Clientes - CRUD completo com relatórios" & Environment.NewLine &
+                   "✅ Gestão de Estoque - Controle de produtos e movimentações" & Environment.NewLine &
+                   "✅ Relatórios Avançados - Dashboards e análises" & Environment.NewLine &
+                   "✅ Banco de Dados Inteligente - Access com fallback para Excel" & Environment.NewLine &
+                   "✅ Sistema de Busca - Produtos e clientes com filtros" & Environment.NewLine &
+                   "✅ Calendário Integrado - Eventos e datas importantes" & Environment.NewLine &
+                   "✅ Cálculos Automáticos - Totais, descontos e impostos",
+            .Font = New Font("Segoe UI", 12),
+            .ForeColor = Color.FromArgb(80, 80, 80),
+            .Location = New Point(50, 100),
+            .Size = New Size(700, 300)
+        }
+
+        Dim lblInstrucoes As New Label() With {
+            .Text = "👈 Use o menu lateral para navegar pelas funcionalidades do sistema",
+            .Font = New Font("Segoe UI", 14, FontStyle.Bold),
+            .ForeColor = Color.FromArgb(0, 120, 215),
+            .Location = New Point(50, 420),
+            .AutoSize = True
+        }
+
+        Dim lblVersao As New Label() With {
+            .Text = $"Versão 5.0 Integrada | Status: {_database?.VerificarConexao()}",
+            .Font = New Font("Segoe UI", 9),
+            .ForeColor = Color.Gray,
+            .Location = New Point(50, 470),
+            .AutoSize = True
+        }
+
+        pnlMain.Controls.AddRange({lblBemVindo, lblDescricao, lblInstrucoes, lblVersao})
+    End Sub
+
+    ''' <summary>
+    ''' Configura eventos e comportamentos da interface
     ''' </summary>
     Private Sub ConfigurarInterface()
-        ' Adicionar informações da madeireira no painel principal
-        Dim lblInfo As New Label()
-        lblInfo.Text = enderecoMadeireira & vbCrLf & 
-                      "📞 " & ConfigurationManager.AppSettings("TelefoneMadeireira") & vbCrLf &
-                      "📋 CNPJ: " & ConfigurationManager.AppSettings("CNPJMadeireira")
-        lblInfo.Font = New Font("Segoe UI", 10.0F, FontStyle.Regular)
-        lblInfo.ForeColor = Color.FromArgb(127, 140, 141)
-        lblInfo.AutoSize = True
-        lblInfo.Location = New Point(20, 160)
-        pnlMain.Controls.Add(lblInfo)
-
-        ' Adicionar instruções
-        Dim lblInstrucoes As New Label()
-        lblInstrucoes.Text = "📋 INSTRUÇÕES DE USO:" & vbCrLf & vbCrLf &
-                            "1. Clique em 'GERAR TALÃO' para abrir o formulário de entrada de dados" & vbCrLf &
-                            "2. Preencha os dados do cliente e produtos" & vbCrLf &
-                            "3. O sistema irá abrir o Excel automaticamente em segundo plano" & vbCrLf &
-                            "4. O talão será gerado e impresso automaticamente" & vbCrLf &
-                            "5. O Excel será fechado automaticamente após a impressão" & vbCrLf & vbCrLf &
-                            "✅ Não é necessário ter Excel aberto manualmente" & vbCrLf &
-                            "✅ Não é necessário ter planilhas salvas" & vbCrLf &
-                            "✅ Todo o processo é automático!"
-        lblInstrucoes.Font = New Font("Segoe UI", 11.0F, FontStyle.Regular)
-        lblInstrucoes.ForeColor = Color.FromArgb(52, 73, 94)
-        lblInstrucoes.Size = New Size(700, 300)
-        lblInstrucoes.Location = New Point(20, 250)
-        pnlMain.Controls.Add(lblInstrucoes)
-
-        ' Efeitos visuais nos botões
-        AdicionarEfeitosBotoes()
+        ' Animações hover nos botões (implementar se necessário)
+        ' Atalhos de teclado (implementar se necessário)
     End Sub
 
-    ''' <summary>
-    ''' Adiciona efeitos visuais aos botões (hover, etc.)
-    ''' </summary>
-    Private Sub AdicionarEfeitosBotoes()
-        ' Efeito hover para o botão principal
-        AddHandler btnGerarTalao.MouseEnter, Sub() btnGerarTalao.BackColor = Color.FromArgb(39, 174, 96)
-        AddHandler btnGerarTalao.MouseLeave, Sub() btnGerarTalao.BackColor = Color.FromArgb(46, 204, 113)
+    #Region "Eventos dos Botões"
 
-        ' Efeito hover para outros botões
-        AddHandler btnConfiguracoes.MouseEnter, Sub() btnConfiguracoes.BackColor = Color.FromArgb(44, 62, 80)
-        AddHandler btnConfiguracoes.MouseLeave, Sub() btnConfiguracoes.BackColor = Color.FromArgb(52, 73, 94)
-
-        AddHandler btnSobre.MouseEnter, Sub() btnSobre.BackColor = Color.FromArgb(44, 62, 80)
-        AddHandler btnSobre.MouseLeave, Sub() btnSobre.BackColor = Color.FromArgb(52, 73, 94)
-
-        AddHandler btnSair.MouseEnter, Sub() btnSair.BackColor = Color.FromArgb(192, 57, 43)
-        AddHandler btnSair.MouseLeave, Sub() btnSair.BackColor = Color.FromArgb(231, 76, 60)
+    Private Sub btnPDVCompleto_Click(sender As Object, e As EventArgs) Handles btnPDVCompleto.Click
+        Try
+            If _mainPDVForm Is Nothing OrElse _mainPDVForm.IsDisposed Then
+                _mainPDVForm = New MainPDVForm()
+            End If
+            _mainPDVForm.Show()
+            _mainPDVForm.BringToFront()
+        Catch ex As Exception
+            MessageBox.Show($"Erro ao abrir PDV: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
-    ''' <summary>
-    ''' Evento click do botão Gerar Talão - função principal do sistema
-    ''' </summary>
     Private Sub btnGerarTalao_Click(sender As Object, e As EventArgs) Handles btnGerarTalao.Click
         Try
-            ' Abrir formulário de entrada de dados
-            Dim formPDV As New FormPDV()
-            If formPDV.ShowDialog() = DialogResult.OK Then
-                ' Os dados foram preenchidos, processar talão
-                ProcessarTalao(formPDV.DadosColetados)
-            End If
+            Using formPDV As New FormPDV()
+                If formPDV.ShowDialog() = DialogResult.OK Then
+                    Dim excelAutomation As New ExcelAutomation()
+                    excelAutomation.ProcessarTalaoCompleto(formPDV.DadosColetados)
+                    MessageBox.Show("Talão gerado com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End If
+            End Using
         Catch ex As Exception
-            MessageBox.Show("Erro ao abrir formulário de entrada de dados:" & vbCrLf & ex.Message, 
-                          "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            MessageBox.Show($"Erro ao gerar talão: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
-    ''' <summary>
-    ''' Processa a geração do talão com integração Excel/VBA
-    ''' </summary>
-    Private Sub ProcessarTalao(dados As DadosTalao)
+    Private Sub btnGestaoClientes_Click(sender As Object, e As EventArgs) Handles btnGestaoClientes.Click
         Try
-            ' Mostrar mensagem de processamento
-            Dim loading As New Form()
-            loading.Text = "Processando..."
-            loading.Size = New Size(400, 150)
-            loading.StartPosition = FormStartPosition.CenterParent
-            loading.FormBorderStyle = FormBorderStyle.FixedDialog
-            loading.MaximizeBox = False
-            loading.MinimizeBox = False
-
-            Dim lblLoading As New Label()
-            lblLoading.Text = "🔄 Gerando talão automaticamente..." & vbCrLf & 
-                             "• Abrindo Excel em segundo plano" & vbCrLf &
-                             "• Criando template de talão" & vbCrLf &
-                             "• Preenchendo dados" & vbCrLf &
-                             "• Preparando impressão"
-            lblLoading.AutoSize = True
-            lblLoading.Location = New Point(20, 20)
-            lblLoading.Font = New Font("Segoe UI", 10.0F)
-            loading.Controls.Add(lblLoading)
-
-            loading.Show()
-            Application.DoEvents()
-
-            ' Executar automação do Excel
-            Dim excel As New ExcelAutomation()
-            excel.ProcessarTalaoCompleto(dados)
-
-            loading.Close()
-
-            ' Sucesso
-            MessageBox.Show("✅ Talão gerado e impresso com sucesso!" & vbCrLf & vbCrLf &
-                          "Cliente: " & dados.NomeCliente & vbCrLf &
-                          "Total de produtos: " & dados.Produtos.Count.ToString() & vbCrLf &
-                          "Vendedor: " & dados.Vendedor,
-                          "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information)
-
+            Using form As New FormGestaoClientes()
+                form.ShowDialog()
+            End Using
         Catch ex As Exception
-            MessageBox.Show("❌ Erro ao gerar talão:" & vbCrLf & vbCrLf & ex.Message & vbCrLf & vbCrLf &
-                          "Verifique se o Microsoft Excel está instalado no computador.",
-                          "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            MessageBox.Show($"Erro ao abrir gestão de clientes: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
-    ''' <summary>
-    ''' Evento click do botão Configurações
-    ''' </summary>
+    Private Sub btnGestaoEstoque_Click(sender As Object, e As EventArgs) Handles btnGestaoEstoque.Click
+        Try
+            Using form As New FormBuscaProdutos()
+                form.ShowDialog()
+            End Using
+        Catch ex As Exception
+            MessageBox.Show($"Erro ao abrir gestão de estoque: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Sub btnRelatorios_Click(sender As Object, e As EventArgs) Handles btnRelatorios.Click
+        MessageBox.Show("Relatórios em desenvolvimento." & Environment.NewLine & 
+                       "Em breve: Dashboard completo com gráficos e análises.", 
+                       "Relatórios", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
     Private Sub btnConfiguracoes_Click(sender As Object, e As EventArgs) Handles btnConfiguracoes.Click
-        MessageBox.Show("🔧 Módulo de Configurações" & vbCrLf & vbCrLf &
-                       "Em desenvolvimento. Funcionalidades planejadas:" & vbCrLf &
-                       "• Configuração de impressora padrão" & vbCrLf &
-                       "• Dados da madeireira" & vbCrLf &
-                       "• Layout do talão" & vbCrLf &
-                       "• Produtos cadastrados",
+        MessageBox.Show("Configurações do sistema:" & Environment.NewLine & Environment.NewLine &
+                       "• Edite o arquivo App.config para personalizar" & Environment.NewLine &
+                       "• Nome da madeireira, endereço, vendedor padrão" & Environment.NewLine &
+                       "• Configurações de banco de dados" & Environment.NewLine &
+                       "• Parâmetros de impressão", 
                        "Configurações", MessageBoxButtons.OK, MessageBoxIcon.Information)
     End Sub
 
-    ''' <summary>
-    ''' Evento click do botão Sobre
-    ''' </summary>
     Private Sub btnSobre_Click(sender As Object, e As EventArgs) Handles btnSobre.Click
-        MessageBox.Show("📋 Sistema PDV - " & nomeMadeireira & vbCrLf & vbCrLf &
-                       "Versão: 1.0.0" & vbCrLf &
-                       "Desenvolvido por: matheus-testuser3" & vbCrLf & vbCrLf &
-                       "🎯 Características:" & vbCrLf &
-                       "• Interface moderna em VB.NET" & vbCrLf &
-                       "• Integração automática com Excel" & vbCrLf &
-                       "• Geração de talões profissionais" & vbCrLf &
-                       "• Execução de VBA incorporado" & vbCrLf &
-                       "• Impressão automática" & vbCrLf & vbCrLf &
-                       "© 2024 - Todos os direitos reservados",
+        MessageBox.Show($"Sistema PDV Integrado - {nomeMadeireira}" & Environment.NewLine & Environment.NewLine &
+                       "Versão: 5.0 Integrada e Otimizada" & Environment.NewLine &
+                       "Desenvolvedor: matheus-testuser3" & Environment.NewLine &
+                       "Data: " & Date.Now.ToString("dd/MM/yyyy") & Environment.NewLine & Environment.NewLine &
+                       "Sistema completo de PDV com:" & Environment.NewLine &
+                       "• Interface moderna integrada" & Environment.NewLine &
+                       "• Geração automática de talões" & Environment.NewLine &
+                       "• Gestão completa de clientes e produtos" & Environment.NewLine &
+                       "• Banco de dados inteligente" & Environment.NewLine &
+                       "• Relatórios e análises" & Environment.NewLine & Environment.NewLine &
+                       "Framework: .NET 4.7.2 | Excel Automation | VBA Integration", 
                        "Sobre o Sistema", MessageBoxButtons.OK, MessageBoxIcon.Information)
     End Sub
 
-    ''' <summary>
-    ''' Evento click do botão Sair
-    ''' </summary>
     Private Sub btnSair_Click(sender As Object, e As EventArgs) Handles btnSair.Click
-        If MessageBox.Show("Tem certeza que deseja sair do sistema?", 
-                          "Confirmar Saída", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+        If MessageBox.Show("Deseja realmente sair do sistema?", "Confirmar Saída", 
+                          MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
             Application.Exit()
         End If
     End Sub
 
+    #End Region
+
     ''' <summary>
-    ''' Evento de carregamento do formulário
+    ''' Limpa recursos ao fechar
     ''' </summary>
-    Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Verificar se Excel está instalado
+    Protected Overrides Sub OnFormClosed(e As FormClosedEventArgs)
         Try
-            Dim excel As Object = CreateObject("Excel.Application")
-            excel.Quit()
-            excel = Nothing
-        Catch ex As Exception
-            MessageBox.Show("⚠️ ATENÇÃO: Microsoft Excel não foi detectado!" & vbCrLf & vbCrLf &
-                          "O sistema PDV requer o Microsoft Excel para funcionar." & vbCrLf &
-                          "Por favor, instale o Microsoft Excel e reinicie o sistema." & vbCrLf & vbCrLf &
-                          "Erro: " & ex.Message,
-                          "Excel Não Encontrado", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            _mainPDVForm?.Close()
+        Catch
         End Try
+        MyBase.OnFormClosed(e)
     End Sub
-End Class
-
-''' <summary>
-''' Estrutura de dados para o talão
-''' </summary>
-Public Class DadosTalao
-    Public Property NomeCliente As String
-    Public Property EnderecoCliente As String
-    Public Property CEP As String
-    Public Property Cidade As String
-    Public Property Telefone As String
-    Public Property Produtos As List(Of ProdutoTalao)
-    Public Property FormaPagamento As String
-    Public Property Vendedor As String
-    Public Property DataVenda As Date
-    Public Property NumeroTalao As String
-
-    Public Sub New()
-        Produtos = New List(Of ProdutoTalao)()
-        DataVenda = Date.Now
-        NumeroTalao = Date.Now.ToString("yyyyMMddHHmmss")
-    End Sub
-End Class
-
-''' <summary>
-''' Estrutura de dados para produtos do talão
-''' </summary>
-Public Class ProdutoTalao
-    Public Property Descricao As String
-    Public Property Quantidade As Double
-    Public Property Unidade As String
-    Public Property PrecoUnitario As Double
-    Public Property PrecoTotal As Double
-
-    Public Sub New()
-        Unidade = "UN"
-    End Sub
-End Class

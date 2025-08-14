@@ -74,6 +74,17 @@
     <Compile Include="ModuloTalao.vb" />
     <Compile Include="ModuloTemplate.vb" />
     <Compile Include="ModuloIntegracao.vb" />
+    <Compile Include="DataModels.vb" />
+    <Compile Include="DatabaseManager.vb" />
+    <Compile Include="ProductSearchManager.vb" />
+    <Compile Include="CalendarioSystem.vb" />
+    <Compile Include="CalculationSystem.vb" />
+    <Compile Include="MainPDVForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CustomerManagement.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>

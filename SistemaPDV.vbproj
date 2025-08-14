@@ -85,6 +85,12 @@
     <Compile Include="CustomerManagement.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="ReportsSystem.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="OrderConfirmationSystem.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>

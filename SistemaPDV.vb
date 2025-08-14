@@ -319,9 +319,13 @@ Public Class MainForm
     End Sub
 
     Private Sub btnRelatorios_Click(sender As Object, e As EventArgs) Handles btnRelatorios.Click
-        MessageBox.Show("Relatórios em desenvolvimento." & Environment.NewLine & 
-                       "Em breve: Dashboard completo com gráficos e análises.", 
-                       "Relatórios", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Try
+            Using form As New FormRelatorios()
+                form.ShowDialog()
+            End Using
+        Catch ex As Exception
+            MessageBox.Show($"Erro ao abrir relatórios: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Sub btnConfiguracoes_Click(sender As Object, e As EventArgs) Handles btnConfiguracoes.Click

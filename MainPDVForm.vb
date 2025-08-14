@@ -623,49 +623,33 @@ Public Class MainPDVForm
                 Return
             End If
             
-            ' Validar cálculos
-            Dim erros = _calculadora.ValidarCalculos()
-            If erros.Count > 0 Then
-                MessageBox.Show($"Corrija os seguintes erros:{Environment.NewLine}{String.Join(Environment.NewLine, erros)}", 
-                              "Erros de Validação", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                Return
-            End If
+            ' Atualizar dados da venda com dados da interface
+            _vendaAtual.Cliente.Nome = txtNomeCliente.Text
+            _vendaAtual.Cliente.Endereco = txtEnderecoCliente.Text
+            _vendaAtual.Cliente.Telefone = txtTelefoneCliente.Text
+            _vendaAtual.FormaPagamento = cmbFormaPagamento.Text
+            _vendaAtual.VendedorNome = cmbVendedor.Text
             
-            ' Preparar dados para o talão
-            Dim dadosTalao As New DadosTalao() With {
-                .NomeCliente = txtNomeCliente.Text,
-                .EnderecoCliente = txtEnderecoCliente.Text,
-                .Telefone = txtTelefoneCliente.Text,
-                .FormaPagamento = cmbFormaPagamento.Text,
-                .Vendedor = cmbVendedor.Text,
-                .NumeroTalao = _vendaAtual.NumeroTalao
-            }
+            ' Atualizar calculadora
+            Decimal.TryParse(txtDescontoGeral.Text, _calculadora.DescontoGeral)
+            Decimal.TryParse(txtFrete.Text, _calculadora.Frete)
             
-            ' Converter itens para produtos do talão
-            For Each item In _vendaAtual.Itens
-                dadosTalao.Produtos.Add(New ProdutoTalao() With {
-                    .Descricao = item.Produto.Descricao,
-                    .Quantidade = item.Quantidade,
-                    .Unidade = item.Produto.Unidade,
-                    .PrecoUnitario = item.PrecoUnitario,
-                    .PrecoTotal = _calculadora.CalcularSubtotalItem(item)
-                })
-            Next
-            
-            ' Gerar talão via ExcelAutomation
-            Dim excelAutomation As New ExcelAutomation()
-            excelAutomation.ProcessarTalaoCompleto(dadosTalao)
-            
-            MessageBox.Show("Talão gerado e impresso com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information)
-            
-            ' Salvar venda
-            _database.SalvarVenda(_vendaAtual)
-            
-            ' Limpar para nova venda
-            NovaVenda()
+            ' Abrir formulário de confirmação
+            Using formConfirmacao As New FormConfirmacaoPedido(_vendaAtual, _calculadora)
+                Dim resultado = formConfirmacao.ShowDialog()
+                
+                If resultado = DialogResult.OK Then
+                    ' Pedido confirmado
+                    MessageBox.Show("Pedido confirmado e talão gerado com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    NovaVenda() ' Limpar para nova venda
+                ElseIf resultado = DialogResult.Retry Then
+                    ' Usuário quer editar - manter dados atuais
+                    Return
+                End If
+            End Using
             
         Catch ex As Exception
-            MessageBox.Show($"Erro ao gerar talão: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            MessageBox.Show($"Erro ao processar pedido: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
     

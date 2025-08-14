@@ -49,6 +49,10 @@
     <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Configuration" />
   </ItemGroup>
   <ItemGroup>
     <Import Include="Microsoft.VisualBasic" />
@@ -70,10 +74,16 @@
     <Compile Include="FormPDV.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="FormSelecaoTalaoBackup.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="ExcelAutomation.vb" />
     <Compile Include="ModuloTalao.vb" />
     <Compile Include="ModuloTemplate.vb" />
     <Compile Include="ModuloIntegracao.vb" />
+    <Compile Include="ModuloBackupTalao.vb" />
+    <Compile Include="DadosTalaoMadeireira.vb" />
+    <Compile Include="SistemaPDV_BackupIntegration.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -93,6 +103,9 @@
   <ItemGroup>
     <EmbeddedResource Include="FormPDV.resx">
       <DependentUpon>FormPDV.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormSelecaoTalaoBackup.resx">
+      <DependentUpon>FormSelecaoTalaoBackup.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SistemaPDV.resx">
       <DependentUpon>SistemaPDV.vb</DependentUpon>

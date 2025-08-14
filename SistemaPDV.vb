@@ -25,12 +25,16 @@ Public Class MainForm
     Private ReadOnly nomeMadeireira As String = ConfigurationManager.AppSettings("NomeMadeireira")
     Private ReadOnly enderecoMadeireira As String = ConfigurationManager.AppSettings("EnderecoMadeireira")
 
+    ' Sistema de backup integrado
+    Private backupIntegration As SistemaPDV_BackupIntegration
+
     ''' <summary>
     ''' Construtor do formulário principal
     ''' </summary>
     Public Sub New()
         InitializeComponent()
         ConfigurarInterface()
+        InicializarSistemaBackup()
     End Sub
 
     ''' <summary>
@@ -321,6 +325,27 @@ Public Class MainForm
                           "Por favor, instale o Microsoft Excel e reinicie o sistema." & vbCrLf & vbCrLf &
                           "Erro: " & ex.Message,
                           "Excel Não Encontrado", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Inicializa o sistema de backup integrado
+    ''' Data/Hora: 2025-08-14 11:16:26 UTC
+    ''' Usuário: matheus-testuser3
+    ''' </summary>
+    Private Sub InicializarSistemaBackup()
+        Try
+            Debug.WriteLine("[MAIN-FORM] Inicializando sistema de backup...")
+            
+            ' Criar instância da integração de backup
+            backupIntegration = New SistemaPDV_BackupIntegration(Me)
+            
+            Debug.WriteLine("[MAIN-FORM] Sistema de backup inicializado com sucesso")
+            
+        Catch ex As Exception
+            Debug.WriteLine($"[MAIN-FORM] ERRO ao inicializar backup: {ex.Message}")
+            ' Não mostrar erro ao usuário para não impedir o funcionamento principal
+            ' O sistema de backup é funcionalidade adicional
         End Try
     End Sub
 End Class

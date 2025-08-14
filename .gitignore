@@ -49,3 +49,18 @@ Thumbs.db
 # Talões temporários (se configurado para salvar)
 Talao_*.xlsx
 Talao_*.xls
+
+# Backup system generated files
+Backups/*.xlsx
+Backups/*.xls
+BackupJSON/*.json
+Taloes/*.xlsx
+Taloes/*.xls
+
+# Keep directories but ignore content
+Backups/*
+!Backups/.gitkeep
+Taloes/*
+!Taloes/.gitkeep
+BackupJSON/*
+!BackupJSON/.gitkeep

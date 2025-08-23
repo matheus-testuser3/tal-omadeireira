@@ -39,6 +39,14 @@ End Type
 Public VendaCorrente As VendaAtual
 
 ' ====================================================================
+' SUBSTITUIÇÃO DO btnImprimirUltraSimples_Click - VERSÃO NOVA
+' ====================================================================
+Private Sub btnImprimirUltraSimples_Click()
+    ' Chama o sistema PDV completo - substitui todo o código antigo
+    Call ProcessarVendaPDV
+End Sub
+
+' ====================================================================
 ' FUNÇÃO PRINCIPAL DO PDV - PROCESSA VENDA COMPLETA
 ' ====================================================================
 Public Sub ProcessarVendaPDV()

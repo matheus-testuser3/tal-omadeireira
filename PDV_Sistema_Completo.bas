@@ -319,10 +319,13 @@ End Function
 Private Sub LimparPlanilhaTalao(ws As Worksheet)
     On Error Resume Next
     
-    ' Limpar dados da planilha de forma simples
-    ws.Cells.Clear
+    ' Limpar apenas os campos de dados, preservando o template
+    ws.Range("B7:H9,M7:T9").ClearContents         ' Cabeçalhos cliente
+    ws.Range("B11:H21,M11:T21").ClearContents     ' Produtos
+    ws.Range("B22:H25,M22:T25").ClearContents     ' Rodapés/totais
+    ws.Range("B6,M6").ClearContents               ' Número do pedido
     
-    Debug.Print "Planilha limpa para novo pedido"
+    Debug.Print "Campos da planilha limpos, template preservado"
     
     On Error GoTo 0
 End Sub
@@ -334,50 +337,35 @@ Private Sub EscreverCabecalhoTalao(ws As Worksheet)
     On Error Resume Next
     
     With VendaCorrente
-        ' Cabeçalho da empresa
-        ws.Range("A1").Value = "MADEIREIRA MARIA LUZIA"
-        ws.Range("A1").Font.Bold = True
-        ws.Range("A1").Font.Size = 16
+        ' Montar endereço completo
+        Dim enderecoCompleto As String
+        enderecoCompleto = .endereco
+        If Trim(.numero) <> "" Then
+            enderecoCompleto = enderecoCompleto & ", " & .numero
+        End If
         
-        ' Número do pedido
-        ws.Range("A3").Value = "PEDIDO #" & .numeroPedido
-        ws.Range("A3").Font.Bold = True
-        ws.Range("A3").Font.Size = 14
+        ' LADO ESQUERDO - Preencher campos específicos da planilha
+        ws.Range("B6").Value = "PEDIDO #" & .numeroPedido    ' Número do pedido
+        ws.Range("B7").Value = .nomeCliente                  ' Nome do cliente
+        ws.Range("B8").Value = enderecoCompleto              ' Endereço completo
+        ws.Range("F8").Value = .bairro                       ' Bairro
+        ws.Range("B9").Value = .cpfCnpj                      ' CPF/CNPJ
+        ws.Range("E9").Value = .cidade                       ' Cidade
+        ws.Range("G9").Value = .uf                           ' UF
+        ws.Range("H9").Value = .cep                          ' CEP
         
-        ' Dados do cliente
-        ws.Range("A5").Value = "CLIENTE:"
-        ws.Range("B5").Value = .nomeCliente
-        
-        ws.Range("A6").Value = "ENDEREÇO:"
-        ws.Range("B6").Value = .endereco & IIf(.numero <> "", ", " & .numero, "")
-        
-        ws.Range("A7").Value = "BAIRRO:"
-        ws.Range("B7").Value = .bairro
-        
-        ws.Range("A8").Value = "CIDADE:"
-        ws.Range("B8").Value = .cidade & "/" & .uf
-        
-        ws.Range("A9").Value = "CEP:"
-        ws.Range("B9").Value = .cep
-        
-        ws.Range("A10").Value = "CPF/CNPJ:"
-        ws.Range("B10").Value = .cpfCnpj
-        
-        ' Dados da venda
-        ws.Range("A12").Value = "DATA VENDA:"
-        ws.Range("B12").Value = Format(.dataVenda, "dd/mm/yyyy")
-        
-        ws.Range("A13").Value = "DATA ENTREGA:"
-        ws.Range("B13").Value = Format(.dataEntrega, "dd/mm/yyyy")
-        
-        ws.Range("A14").Value = "PAGAMENTO:"
-        ws.Range("B14").Value = .formaPagamento
-        
-        ws.Range("A15").Value = "VENDEDOR:"
-        ws.Range("B15").Value = .vendedor
+        ' LADO DIREITO - Espelho (via do cliente)
+        ws.Range("M6").Value = "PEDIDO #" & .numeroPedido    ' Número do pedido
+        ws.Range("M7").Value = .nomeCliente                  ' Nome do cliente
+        ws.Range("M8").Value = enderecoCompleto              ' Endereço completo
+        ws.Range("Q8").Value = .bairro                       ' Bairro
+        ws.Range("M9").Value = .cpfCnpj                      ' CPF/CNPJ
+        ws.Range("P9").Value = .cidade                       ' Cidade
+        ws.Range("R9").Value = .uf                           ' UF
+        ws.Range("T9").Value = .cep                          ' CEP
     End With
     
-    Debug.Print "Cabeçalho escrito | Cliente: " & VendaCorrente.nomeCliente
+    Debug.Print "Cabeçalho preenchido nos campos corretos | Cliente: " & VendaCorrente.nomeCliente
     
     On Error GoTo 0
 End Sub
@@ -392,40 +380,38 @@ Private Sub EscreverProdutosTalao(ws As Worksheet)
     Dim frm As Object
     Set frm = UserForms(0)
     
-    ' Cabeçalho dos produtos
-    ws.Range("A17").Value = "PRODUTOS:"
-    ws.Range("A17").Font.Bold = True
-    
-    ' Cabeçalhos das colunas
-    ws.Range("A18").Value = "REF"
-    ws.Range("B18").Value = "DESCRIÇÃO"
-    ws.Range("C18").Value = "UND"
-    ws.Range("D18").Value = "VLR UNIT"
-    ws.Range("E18").Value = "QTD"
-    ws.Range("F18").Value = "DESC"
-    ws.Range("G18").Value = "TOTAL"
-    
-    ' Formatação dos cabeçalhos
-    ws.Range("A18:G18").Font.Bold = True
-    
     Dim i As Integer
-    Dim linha As Integer
-    linha = 19 ' Começar na linha 19
+    Dim linhaAtual As Integer
+    Dim totalProdutos As Integer
     
-    ' Escrever produtos da lista produtosv2
-    For i = 0 To frm.produtosv2.ListCount - 1
-        ws.Range("A" & linha).Value = frm.produtosv2.List(i, 0)  ' Referência
-        ws.Range("B" & linha).Value = frm.produtosv2.List(i, 1)  ' Descrição
-        ws.Range("C" & linha).Value = frm.produtosv2.List(i, 2)  ' Unidade
-        ws.Range("D" & linha).Value = frm.produtosv2.List(i, 3)  ' Valor Unit
-        ws.Range("E" & linha).Value = frm.produtosv2.List(i, 4)  ' Quantidade
-        ws.Range("F" & linha).Value = frm.produtosv2.List(i, 5)  ' Desconto
-        ws.Range("G" & linha).Value = frm.produtosv2.List(i, 6)  ' Total
+    totalProdutos = IIf(frm.produtosv2.ListCount > 10, 10, frm.produtosv2.ListCount)
+    
+    ' Preencher produtos nas linhas específicas do template (linhas 11 a 21)
+    For i = 0 To 9 ' Máximo 10 produtos conforme template
+        linhaAtual = 11 + i
         
-        linha = linha + 1
+        If i < totalProdutos Then
+            ' LADO ESQUERDO - Preencher campos específicos
+            ws.Range("B" & linhaAtual).Value = frm.produtosv2.List(i, 0)  ' Referência
+            ws.Range("C" & linhaAtual).Value = frm.produtosv2.List(i, 1)  ' Descrição
+            ws.Range("D" & linhaAtual).Value = frm.produtosv2.List(i, 2)  ' Unidade
+            ws.Range("E" & linhaAtual).Value = frm.produtosv2.List(i, 3)  ' Valor Unit
+            ws.Range("F" & linhaAtual).Value = frm.produtosv2.List(i, 4)  ' Quantidade
+            ws.Range("G" & linhaAtual).Value = frm.produtosv2.List(i, 5)  ' Desconto
+            ws.Range("H" & linhaAtual).Value = frm.produtosv2.List(i, 6)  ' Total
+            
+            ' LADO DIREITO - Espelho (via do cliente)
+            ws.Range("M" & linhaAtual).Value = frm.produtosv2.List(i, 0)  ' Referência
+            ws.Range("N" & linhaAtual).Value = frm.produtosv2.List(i, 1)  ' Descrição
+            ws.Range("O" & linhaAtual).Value = frm.produtosv2.List(i, 2)  ' Unidade
+            ws.Range("P" & linhaAtual).Value = frm.produtosv2.List(i, 3)  ' Valor Unit
+            ws.Range("Q" & linhaAtual).Value = frm.produtosv2.List(i, 4)  ' Quantidade
+            ws.Range("R" & linhaAtual).Value = frm.produtosv2.List(i, 5)  ' Desconto
+            ws.Range("S" & linhaAtual).Value = frm.produtosv2.List(i, 6)  ' Total
+        End If
     Next i
     
-    Debug.Print "Produtos escritos | Quantidade: " & frm.produtosv2.ListCount
+    Debug.Print "Produtos preenchidos nos campos corretos | Quantidade: " & totalProdutos
     
     On Error GoTo 0
 End Sub
@@ -436,43 +422,31 @@ End Sub
 Private Sub EscreverRodapeTalao(ws As Worksheet)
     On Error Resume Next
     
-    ' Obter formulário ativo para calcular linha final
-    Dim frm As Object
-    Set frm = UserForms(0)
-    
-    ' Calcular linha para começar o rodapé (após os produtos)
-    Dim linhaRodape As Integer
-    linhaRodape = 19 + frm.produtosv2.ListCount + 2 ' +2 para espaçamento
-    
     With VendaCorrente
-        ' Totais
-        ws.Range("A" & linhaRodape).Value = "RESUMO:"
-        ws.Range("A" & linhaRodape).Font.Bold = True
+        ' LADO ESQUERDO - Preencher campos específicos do rodapé
+        ws.Range("B22").Value = .vendedor                           ' Vendedor
+        ws.Range("B24").Value = "BALCÃO"                           ' Situação
+        ws.Range("B25").Value = .formaPagamento                    ' Forma de pagamento
+        ws.Range("C25").Value = "PEDIDO #" & .numeroPedido         ' Número do pedido
+        ws.Range("F23").Value = Format(.dataEntrega, "dd/mm/yyyy") ' Data de entrega
+        ws.Range("H22").Value = .subtotal                          ' Total produtos
+        ws.Range("H23").Value = .frete                             ' Frete
+        ws.Range("H24").Value = .desconto                          ' Desconto
+        ws.Range("H25").Value = .total                             ' Total geral
         
-        ws.Range("A" & (linhaRodape + 1)).Value = "SUBTOTAL:"
-        ws.Range("B" & (linhaRodape + 1)).Value = .subtotal
-        ws.Range("B" & (linhaRodape + 1)).NumberFormat = "R$ #,##0.00"
-        
-        ws.Range("A" & (linhaRodape + 2)).Value = "DESCONTO:"
-        ws.Range("B" & (linhaRodape + 2)).Value = .desconto
-        ws.Range("B" & (linhaRodape + 2)).NumberFormat = "R$ #,##0.00"
-        
-        ws.Range("A" & (linhaRodape + 3)).Value = "FRETE:"
-        ws.Range("B" & (linhaRodape + 3)).Value = .frete
-        ws.Range("B" & (linhaRodape + 3)).NumberFormat = "R$ #,##0.00"
-        
-        ws.Range("A" & (linhaRodape + 4)).Value = "TOTAL GERAL:"
-        ws.Range("B" & (linhaRodape + 4)).Value = .total
-        ws.Range("A" & (linhaRodape + 4)).Font.Bold = True
-        ws.Range("B" & (linhaRodape + 4)).Font.Bold = True
-        ws.Range("B" & (linhaRodape + 4)).NumberFormat = "R$ #,##0.00"
-        
-        ' Informações adicionais
-        ws.Range("A" & (linhaRodape + 6)).Value = "STATUS: BALCÃO"
-        ws.Range("A" & (linhaRodape + 7)).Value = "DATA/HORA: " & Format(Now, "dd/mm/yyyy hh:mm:ss")
+        ' LADO DIREITO - Espelho (via do cliente)
+        ws.Range("M22").Value = .vendedor                          ' Vendedor
+        ws.Range("M24").Value = "BALCÃO"                          ' Situação
+        ws.Range("M25").Value = .formaPagamento                   ' Forma de pagamento
+        ws.Range("N25").Value = "PEDIDO #" & .numeroPedido        ' Número do pedido
+        ws.Range("P23").Value = Format(.dataEntrega, "dd/mm/yyyy") ' Data de entrega
+        ws.Range("S22").Value = .subtotal                         ' Total produtos
+        ws.Range("S23").Value = .frete                            ' Frete
+        ws.Range("S24").Value = .desconto                         ' Desconto
+        ws.Range("S25").Value = .total                            ' Total geral
     End With
     
-    Debug.Print "Rodapé escrito | Total: R$ " & Format(VendaCorrente.total, "0.00")
+    Debug.Print "Rodapé preenchido nos campos corretos | Total: R$ " & Format(VendaCorrente.total, "0.00")
     
     On Error GoTo 0
 End Sub
@@ -483,18 +457,20 @@ End Sub
 Private Sub FormatarTalao(ws As Worksheet)
     On Error Resume Next
     
-    ' Ajustar largura das colunas automaticamente
-    ws.Columns("A:G").AutoFit
+    ' Formatação especial para número do pedido
+    With ws.Range("B6,M6")
+        .Font.Bold = True
+        .Font.Size = 14
+        .Font.Color = RGB(0, 120, 0)
+        .HorizontalAlignment = xlCenter
+        .Interior.Color = RGB(240, 255, 240)
+        .Borders.LineStyle = xlContinuous
+    End With
     
-    ' Formatação básica
-    ws.Cells.Font.Name = "Arial"
-    ws.Cells.Font.Size = 10
+    ' Formatação para valores monetários nos campos corretos
+    ws.Range("H22,H23,H24,H25,S22,S23,S24,S25").NumberFormat = "_-R$ * #,##0.00_-;-R$ * #,##0.00_-;_-R$ * ""-""_-;_-@_-"
     
-    ' Formatação especial para valores monetários nas colunas D e G (valor unit e total)
-    ws.Columns("D:D").NumberFormat = "R$ #,##0.00"
-    ws.Columns("G:G").NumberFormat = "R$ #,##0.00"
-    
-    Debug.Print "Formatação aplicada ao talão"
+    Debug.Print "Formatação aplicada nos campos corretos do template"
     
     On Error GoTo 0
 End Sub
@@ -541,7 +517,7 @@ Private Sub ConfigurarImpressaoTalao(ws As Worksheet)
     On Error Resume Next
     
     With ws.PageSetup
-        .PrintArea = ""  ' Deixar área automática
+        .PrintArea = "A1:T26"  ' Área específica do template
         .LeftMargin = Application.InchesToPoints(0.25)
         .RightMargin = Application.InchesToPoints(0.25)
         .TopMargin = Application.InchesToPoints(0.35)
